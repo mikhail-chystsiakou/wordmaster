@@ -6,8 +6,8 @@ import org.apache.logging.log4j.LogManager;
 import java.awt.event.ActionEvent;
 
 public class MenuItemListener extends SoundButtonListener {
-    private GameFrame.Pane paneToShow;
-    private GameFrame frame;
+    protected GameFrame.Pane paneToShow;
+    protected GameFrame frame;
 
     public MenuItemListener (GameFrame frame, GameFrame.Pane paneToShow) {
         super(SoundType.MENU);
@@ -21,6 +21,7 @@ public class MenuItemListener extends SoundButtonListener {
 
     @Override
     public void actionPerformed(ActionEvent event) {
+        super.actionPerformed(event);
         if (frame == null || paneToShow == null) {
             // TODO: cleanup stuff
             LogManager.getLogger(this.getClass()).info("Application closed");

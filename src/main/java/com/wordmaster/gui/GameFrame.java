@@ -44,6 +44,10 @@ public class GameFrame {
     }
 
     public void show(Pane paneToShow) {
-        panes.show(gameFrame.getContentPane(), Pane.NEW_GAME.toString());
+        panes.show(gameFrame.getContentPane(), paneToShow.toString());
+    }
+
+    public JFrame getFrame() {
+        return gameFrame;
     }
 }
