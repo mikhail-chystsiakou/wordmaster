@@ -1,6 +1,7 @@
 package com.wordmaster;
 
 import com.wordmaster.gui.GameFrame;
+import com.wordmaster.gui.listeners.SoundButtonListener;
 
 /**
  * Main game class

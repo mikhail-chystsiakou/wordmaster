@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+
+    <Properties>
+        <Property name="layout">%d{HH:mm:ss.SSS} %-5level [%t]:%logger{36} - %msg%n</Property>
+    </Properties>
+    <Appenders>
+        <File name="File" fileName="logs/wordmaster.log">
+            <PatternLayout>
+                <Pattern>${layout}</Pattern>
+            </PatternLayout>
+        </File>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${layout}"/>
+        </Console>
+    </Appenders>
+
+    <Loggers>
+        <Root>
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Root>
+        <Logger name="com.wordmaster" level="trace" additivity="true"/>
+    </Loggers>
+</Configuration>
