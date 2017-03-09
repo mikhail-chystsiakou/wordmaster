@@ -4,6 +4,7 @@ import com.wordmaster.gui.custom.TopMenuLabel;
 import com.wordmaster.gui.listeners.MenuItemListener;
 import com.wordmaster.gui.listeners.SaveSettingsListener;
 import com.wordmaster.gui.listeners.SoundButtonListener;
+import com.wordmaster.model.Settings;
 
 import javax.swing.*;
 import java.awt.*;
@@ -79,12 +80,23 @@ public class PaneFactory {
         // Language settings
         languageControls.add(Box.createHorizontalGlue());
         languageControls.add(new JLabel("Язык:"));
-        languageControls.add(new JLabel("ДропБоксик"));
+        Settings.Language languages[] = {   Settings.Language.RUSSIAN,
+                                            Settings.Language.ENGLISH};
+        JComboBox<Settings.Language> languageJComboBox = new JComboBox<Settings.Language>(languages);
+        languageControls.add(new JComboBox<Settings.Language>(languages));
         languageControls.add(Box.createHorizontalGlue());
         // Look and Feel settings
         lafControls.add(Box.createHorizontalGlue());
-        lafControls.add(new JLabel("look&feel:"));
-        lafControls.add(new JLabel("ДропБоксик"));
+
+        Settings.SupportedLAF lafs[] = {
+                Settings.SupportedLAF.METAL,
+                Settings.SupportedLAF.SYSTEM,
+                Settings.SupportedLAF.WEBLAF
+        };
+        lafControls.add(new JLabel("Look&feel"));
+
+        JComboBox<Settings.SupportedLAF> lafjComboBox = new JComboBox<Settings.SupportedLAF>(lafs);
+        lafControls.add(lafjComboBox);
         lafControls.add(Box.createHorizontalGlue());
 
         controls.add(Box.createVerticalGlue());
@@ -100,7 +112,7 @@ public class PaneFactory {
         JButton backBtn = new JButton("В меню");
         backBtn.addActionListener(new MenuItemListener(targetFrame, GameFrame.Pane.MAIN));
         JButton saveBtn = new JButton("Сохранить");
-        saveBtn.addActionListener(new SaveSettingsListener(targetFrame));
+        saveBtn.addActionListener(new SaveSettingsListener(targetFrame, lafjComboBox, languageJComboBox));
 
         bottomButtons.add(Box.createHorizontalGlue());
         bottomButtons.add(backBtn);
@@ -115,8 +127,85 @@ public class PaneFactory {
         settingsPane.add(bottomButtons, BorderLayout.PAGE_END);
         return settingsPane;
     }
+
     public JPanel buildNewGamePane() {
-        return new JPanel();
+        JPanel newGamePane = new JPanel();
+        newGamePane.setLayout(new BoxLayout(newGamePane, BoxLayout.PAGE_AXIS));
+
+        // Pane name
+        JPanel paneName = new JPanel();
+
+        JLabel paneNameLabel = new TopMenuLabel("Новая игра");
+        paneNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        paneName.add(paneNameLabel);
+
+        JPanel playerSettings = new JPanel();
+
+        // Left player settings
+        JPanel leftPlayerPane = new JPanel();
+        leftPlayerPane.setBorder(BorderFactory.createTitledBorder("Игрок 1"));
+        leftPlayerPane.setLayout(new BoxLayout(leftPlayerPane, BoxLayout.PAGE_AXIS));
+        JPanel leftNameRow = new JPanel();
+        leftNameRow.add(new JLabel("Имя: "));
+        leftNameRow.add(new JTextField(10));
+        leftNameRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        leftPlayerPane.add(leftNameRow);
+        JCheckBox leftComputer = new JCheckBox("Компьютер: ");
+        leftComputer.setHorizontalTextPosition(SwingConstants.LEFT);
+        leftComputer.setAlignmentX(Component.LEFT_ALIGNMENT);
+        leftPlayerPane.add(leftComputer);
+
+        // Right player settings
+        JPanel rightPlayerPane = new JPanel();
+        rightPlayerPane.setBorder(BorderFactory.createTitledBorder("Игрок 2"));
+        rightPlayerPane.setLayout(new BoxLayout(rightPlayerPane, BoxLayout.PAGE_AXIS));
+
+        JPanel rightNameRow = new JPanel();
+        rightNameRow.add(new JLabel("Имя: "));
+        rightNameRow.add(new JTextField(10));
+        rightNameRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        rightPlayerPane.add(rightNameRow);
+        JCheckBox rightComputer = new JCheckBox("Компьютер: ");
+        rightComputer.setHorizontalTextPosition(SwingConstants.LEFT);
+        rightComputer.setAlignmentX(Component.LEFT_ALIGNMENT);
+        rightPlayerPane.add(rightComputer);
+
+        playerSettings.add(leftPlayerPane);
+        playerSettings.add(Box.createHorizontalStrut(30));
+        playerSettings.add(rightPlayerPane);
+
+        // Bottom controls
+
+        JPanel wordPanel = new JPanel();
+        wordPanel.add(Box.createHorizontalGlue());
+        wordPanel.add(new JLabel("Стартовое слово:"));
+        wordPanel.add(new JTextField(10));
+        wordPanel.add(Box.createHorizontalGlue());
+
+
+        JPanel navButtons = new JPanel();
+        navButtons.setLayout(new BoxLayout(navButtons, BoxLayout.LINE_AXIS));
+        navButtons.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JButton backBtn = new JButton("Назад");
+        backBtn.addActionListener(new MenuItemListener(targetFrame, GameFrame.Pane.MAIN));
+        JButton startBtn = new JButton("Начать");
+        startBtn.addActionListener(new MenuItemListener(targetFrame, GameFrame.Pane.GAME));
+
+        navButtons.add(Box.createHorizontalGlue());
+        navButtons.add(backBtn);
+        navButtons.add(Box.createHorizontalStrut(50));
+        navButtons.add(startBtn);
+        navButtons.add(Box.createHorizontalGlue());
+
+
+        newGamePane.add(Box.createVerticalStrut(20));
+        newGamePane.add(paneName);
+        newGamePane.add(playerSettings);
+        newGamePane.add(wordPanel);
+        newGamePane.add(navButtons);
+        newGamePane.add(Box.createVerticalStrut(20));
+        return newGamePane;
     }
     public JPanel buildGamePane() {
         return new JPanel();

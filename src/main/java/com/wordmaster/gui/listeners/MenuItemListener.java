@@ -27,7 +27,6 @@ public class MenuItemListener extends SoundButtonListener {
             LogManager.getLogger(this.getClass()).info("Application closed");
             System.exit(0);
         }
-        LogManager.getLogger(this.getClass()).trace("Menu button pressed");
         frame.show(paneToShow);
     }
 }
