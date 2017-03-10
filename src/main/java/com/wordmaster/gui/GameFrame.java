@@ -16,6 +16,13 @@ public class GameFrame {
     public final static int FRAME_WIDTH = 640;
     public final static int FRAME_HEIGHT = 480;
 
+    public GameFrame() {
+        gameFrame = new JFrame();
+        gameFrame.setTitle("Wordmaster");
+        gameFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        gameFrame.setSize(new Dimension(FRAME_WIDTH, FRAME_HEIGHT));
+    }
+
     /**
      * Enumerates all main game panes
      */
@@ -27,9 +34,7 @@ public class GameFrame {
      * Initializes all panes and shows the frame.
      */
     public void run() {
-        gameFrame = new JFrame();
-        gameFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        gameFrame.setSize(new Dimension(FRAME_WIDTH, FRAME_HEIGHT));
+
 
         gameFrame.getContentPane().setLayout(panes);
 

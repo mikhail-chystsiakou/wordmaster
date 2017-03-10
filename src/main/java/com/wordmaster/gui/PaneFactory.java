@@ -207,7 +207,91 @@ public class PaneFactory {
         newGamePane.add(Box.createVerticalStrut(20));
         return newGamePane;
     }
+
     public JPanel buildGamePane() {
-        return new JPanel();
+        JPanel gamePane = new JPanel();
+            gamePane.setLayout(new BoxLayout(gamePane, BoxLayout.PAGE_AXIS));
+
+        JPanel gameLabelPane = new JPanel();
+        gameLabelPane.setMaximumSize(new Dimension(640, 50));
+        JPanel gameFlowPane = new JPanel();
+            gameFlowPane.setMaximumSize(new Dimension(640, 380));
+            gameFlowPane.setLayout(new BoxLayout(gameFlowPane, BoxLayout.LINE_AXIS));
+        JPanel gameControlButtons = new JPanel();
+            gameControlButtons.setMaximumSize(new Dimension(640, 50));
+            //gameControlButtons.setLayout(new BoxLayout(gameControlButtons, BoxLayout.PAGE_AXIS));
+
+        JPanel leftPlayerPane = new JPanel();
+            leftPlayerPane.setMaximumSize(new Dimension(140, 380));
+            //leftPlayerPane.setLayout(new BoxLayout(leftPlayerPane, BoxLayout.PAGE_AXIS));
+
+        JPanel centralPane = new JPanel();
+            centralPane.setMaximumSize(new Dimension(360, 380));
+            centralPane.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.black),
+                centralPane.getBorder()));
+            centralPane.setLayout(new BoxLayout(centralPane, BoxLayout.PAGE_AXIS));
+            JPanel wordsGridPane = new JPanel();
+                wordsGridPane.setMaximumSize(new Dimension(360, 280));
+                //wordsGridPane.setLayout(new GridLayout());
+            // TODO: separate creating letter selector functionality
+            JPanel letterSelectingPane = new JPanel();
+                letterSelectingPane.setMaximumSize(new Dimension(360, 100));
+                letterSelectingPane.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(Color.blue),
+                        letterSelectingPane.getBorder()));
+                //letterSelectingPane.setLayout(new GridBagLayout());
+
+        JPanel rightPlayerPane = new JPanel();
+            rightPlayerPane.setMaximumSize(new Dimension(140, 380));
+            rightPlayerPane.setLayout(new BoxLayout(rightPlayerPane, BoxLayout.PAGE_AXIS));
+
+
+
+
+        // TODO: set correct player name
+        // Left player
+        JLabel leftPlayerNamePane = new JLabel("Player 1");
+        leftPlayerNamePane.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+
+        JScrollPane leftPlayersWords = new JScrollPane();
+        for (int i = 0; i < 10; i++) {
+            leftPlayersWords.add(new JLabel("Word "+String.valueOf(i)));
+        }
+        //leftPlayerPane.add(leftPlayerNamePane);
+        //leftPlayerPane.add(leftPlayersWords);
+
+        // Right player
+        JLabel rightPlayerNamePane = new JLabel("Player 2");
+        rightPlayerNamePane.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+
+        JScrollPane rightPlayersWords = new JScrollPane();
+        for (int i = 0; i < 10; i++) {
+            rightPlayersWords.add(new JLabel("Word "+String.valueOf(i)));
+        }
+        //rightPlayerPane.add(rightPlayerNamePane);
+        //rightPlayerPane.add(rightPlayersWords);
+
+
+        centralPane.add(wordsGridPane);
+        centralPane.add(letterSelectingPane);
+
+        centralPane.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.black),
+                centralPane.getBorder()));
+
+        gameFlowPane.add(leftPlayerPane);
+        gameFlowPane.add(centralPane);
+        gameFlowPane.add(rightPlayerPane);
+
+        gameFlowPane.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.red),
+                gameFlowPane.getBorder()));
+
+        gamePane.add(gameLabelPane);
+        gamePane.add(gameFlowPane);
+        gamePane.add(gameControlButtons);
+
+        return gamePane;
     }
 }
