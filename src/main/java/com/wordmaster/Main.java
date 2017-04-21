@@ -1,5 +1,6 @@
 package com.wordmaster;
 
+import com.alee.utils.SwingUtils;
 import com.wordmaster.gui.GameFrame;
 import com.wordmaster.gui.listeners.SoundButtonListener;
 
@@ -11,7 +12,10 @@ import com.wordmaster.gui.listeners.SoundButtonListener;
  */
 public class Main {
     public static void main(String[] args) {
-        GameFrame gf = new GameFrame();
-        gf.run();
+        SwingUtils.invokeLater(() -> {
+            GameFrame gf = GameFrame.getInstance();
+            gf.initialize();
+            gf.run();
+        });
     }
 }

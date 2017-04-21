@@ -3,7 +3,6 @@ package com.wordmaster.gui;
 import com.wordmaster.gui.custom.TopMenuLabel;
 import com.wordmaster.gui.listeners.MenuItemListener;
 import com.wordmaster.gui.listeners.SaveSettingsListener;
-import com.wordmaster.gui.listeners.SoundButtonListener;
 import com.wordmaster.model.Settings;
 
 import javax.swing.*;
@@ -16,45 +15,40 @@ import java.awt.*;
  * @version 1.1
  */
 public class PaneFactory {
-    protected GameFrame targetFrame;
 
-    public PaneFactory(GameFrame targetFrame) {
-        this.targetFrame = targetFrame;
-    }
+    public JComponent buildStartupPane() {
+        Box startupPane = Box.createVerticalBox();
 
-    public JPanel buildMainPane() {
-        JPanel mainPane = new JPanel();
-        mainPane.setLayout(new BoxLayout(mainPane, BoxLayout.PAGE_AXIS));
-
-        mainPane.add(Box.createVerticalGlue());
-        JButton newGameBtn = new JButton("Новая игра");
+        startupPane.add(Box.createVerticalGlue());
+        JButton newGameBtn = ButtonFactory.getStandardButton("Новая игра");
         newGameBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        newGameBtn.addActionListener(new MenuItemListener(targetFrame, GameFrame.Pane.NEW_GAME));
-        mainPane.add(newGameBtn);
+        newGameBtn.addActionListener(new MenuItemListener(GameFrame.Pane.NEW_GAME));
+        startupPane.add(newGameBtn);
 
-        mainPane.add(Box.createVerticalGlue());
-        JButton loadGameBtn = new JButton("Загрузить игру");
+        startupPane.add(Box.createVerticalGlue());
+        JButton loadGameBtn = ButtonFactory.getStandardButton("Загрузить игру");
         loadGameBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         loadGameBtn.setEnabled(false);
-        mainPane.add(loadGameBtn);
+        startupPane.add(loadGameBtn);
 
-        mainPane.add(Box.createVerticalGlue());
-        JButton settingsBtn = new JButton("Настройки");
+        startupPane.add(Box.createVerticalGlue());
+        JButton settingsBtn = ButtonFactory.getStandardButton("Настройки");
         settingsBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        settingsBtn.addActionListener(new MenuItemListener(targetFrame, GameFrame.Pane.SETTINGS));
-        mainPane.add(settingsBtn);
+        settingsBtn.addActionListener(new MenuItemListener(GameFrame.Pane.SETTINGS));
+        startupPane.add(settingsBtn);
 
-        mainPane.add(Box.createVerticalGlue());
-        JButton exitBtn = new JButton("Выход");
+        startupPane.add(Box.createVerticalGlue());
+        JButton exitBtn = ButtonFactory.getStandardButton("Выход");
         exitBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         exitBtn.addActionListener(new MenuItemListener());
-        mainPane.add(exitBtn);
+        startupPane.add(exitBtn);
 
-        mainPane.add(Box.createVerticalGlue());
-        return mainPane;
+        startupPane.add(Box.createVerticalGlue());
+        return startupPane;
     }
 
-    public JPanel buildSettingsPane() {
+    public JComponent buildSettingsPane() {
+        // TODO: use grid bag layout
         JPanel settingsPane = new JPanel();
         settingsPane.setLayout(new BorderLayout());
 
@@ -110,9 +104,9 @@ public class PaneFactory {
         // Back and Save buttons
         JPanel bottomButtons = new JPanel();
         JButton backBtn = new JButton("В меню");
-        backBtn.addActionListener(new MenuItemListener(targetFrame, GameFrame.Pane.MAIN));
+        backBtn.addActionListener(new MenuItemListener(GameFrame.Pane.MAIN));
         JButton saveBtn = new JButton("Сохранить");
-        saveBtn.addActionListener(new SaveSettingsListener(targetFrame, lafjComboBox, languageJComboBox));
+        saveBtn.addActionListener(new SaveSettingsListener(lafjComboBox, languageJComboBox));
 
         bottomButtons.add(Box.createHorizontalGlue());
         bottomButtons.add(backBtn);
@@ -188,9 +182,9 @@ public class PaneFactory {
         navButtons.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JButton backBtn = new JButton("Назад");
-        backBtn.addActionListener(new MenuItemListener(targetFrame, GameFrame.Pane.MAIN));
+        backBtn.addActionListener(new MenuItemListener(GameFrame.Pane.MAIN));
         JButton startBtn = new JButton("Начать");
-        startBtn.addActionListener(new MenuItemListener(targetFrame, GameFrame.Pane.GAME));
+        startBtn.addActionListener(new MenuItemListener(GameFrame.Pane.GAME));
 
         navButtons.add(Box.createHorizontalGlue());
         navButtons.add(backBtn);
@@ -213,37 +207,30 @@ public class PaneFactory {
             gamePane.setLayout(new BoxLayout(gamePane, BoxLayout.PAGE_AXIS));
 
         JPanel gameLabelPane = new JPanel();
-        gameLabelPane.setMaximumSize(new Dimension(640, 50));
+        gameLabelPane.setMaximumSize(new Dimension(640, 60));
         JPanel gameFlowPane = new JPanel();
-            gameFlowPane.setMaximumSize(new Dimension(640, 380));
+            gameFlowPane.setMaximumSize(new Dimension(640, 360));
             gameFlowPane.setLayout(new BoxLayout(gameFlowPane, BoxLayout.LINE_AXIS));
         JPanel gameControlButtons = new JPanel();
-            gameControlButtons.setMaximumSize(new Dimension(640, 50));
+            gameControlButtons.setMaximumSize(new Dimension(640, 60));
             //gameControlButtons.setLayout(new BoxLayout(gameControlButtons, BoxLayout.PAGE_AXIS));
 
         JPanel leftPlayerPane = new JPanel();
-            leftPlayerPane.setMaximumSize(new Dimension(140, 380));
+            leftPlayerPane.setMaximumSize(new Dimension(140, 360));
             //leftPlayerPane.setLayout(new BoxLayout(leftPlayerPane, BoxLayout.PAGE_AXIS));
 
         JPanel centralPane = new JPanel();
-            centralPane.setMaximumSize(new Dimension(360, 380));
+            centralPane.setMaximumSize(new Dimension(360, 360));
             centralPane.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Color.black),
                 centralPane.getBorder()));
             centralPane.setLayout(new BoxLayout(centralPane, BoxLayout.PAGE_AXIS));
             JPanel wordsGridPane = new JPanel();
-                wordsGridPane.setMaximumSize(new Dimension(360, 280));
-                //wordsGridPane.setLayout(new GridLayout());
-            // TODO: separate creating letter selector functionality
-            JPanel letterSelectingPane = new JPanel();
-                letterSelectingPane.setMaximumSize(new Dimension(360, 100));
-                letterSelectingPane.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(Color.blue),
-                        letterSelectingPane.getBorder()));
-                //letterSelectingPane.setLayout(new GridBagLayout());
+                wordsGridPane.setMaximumSize(new Dimension(360, 360));
+                wordsGridPane.setLayout(new GridLayout(6, 6));
 
         JPanel rightPlayerPane = new JPanel();
-            rightPlayerPane.setMaximumSize(new Dimension(140, 380));
+            rightPlayerPane.setMaximumSize(new Dimension(140, 360));
             rightPlayerPane.setLayout(new BoxLayout(rightPlayerPane, BoxLayout.PAGE_AXIS));
 
 
@@ -272,9 +259,13 @@ public class PaneFactory {
         //rightPlayerPane.add(rightPlayerNamePane);
         //rightPlayerPane.add(rightPlayersWords);
 
+        for (int i = 0; i < 36; i++) {
+            JLabel letterLabel = new JLabel();
+            letterLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            wordsGridPane.add(letterLabel);
+        }
 
         centralPane.add(wordsGridPane);
-        centralPane.add(letterSelectingPane);
 
         centralPane.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Color.black),

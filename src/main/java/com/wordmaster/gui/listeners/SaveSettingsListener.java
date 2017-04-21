@@ -13,10 +13,9 @@ public class SaveSettingsListener extends MenuItemListener {
     private JComboBox<Settings.SupportedLAF> lafjComboBox;
     private JComboBox<Settings.Language> languagejComboBox;
 
-    public SaveSettingsListener(GameFrame targetFrame,
-                                JComboBox<Settings.SupportedLAF> lafjComboBox,
+    public SaveSettingsListener(JComboBox<Settings.SupportedLAF> lafjComboBox,
                                 JComboBox<Settings.Language> languagejComboBox) {
-        super(targetFrame, GameFrame.Pane.MAIN);
+        super(GameFrame.Pane.MAIN);
         this.lafjComboBox = lafjComboBox;
         this.languagejComboBox = languagejComboBox;
     }
@@ -29,6 +28,6 @@ public class SaveSettingsListener extends MenuItemListener {
         );
         super.actionPerformed(event);
         Settings.getInstance().apply(settingsToApply);
-        SwingUtilities.updateComponentTreeUI(frame.getFrame());
+        SwingUtilities.updateComponentTreeUI(GameFrame.getInstance().getFrame());
     }
 }

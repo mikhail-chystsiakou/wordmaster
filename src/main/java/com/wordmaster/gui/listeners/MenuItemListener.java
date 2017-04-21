@@ -7,11 +7,9 @@ import java.awt.event.ActionEvent;
 
 public class MenuItemListener extends SoundButtonListener {
     protected GameFrame.Pane paneToShow;
-    protected GameFrame frame;
 
-    public MenuItemListener (GameFrame frame, GameFrame.Pane paneToShow) {
+    public MenuItemListener (GameFrame.Pane paneToShow) {
         super(SoundType.MENU);
-        this.frame = frame;
         this.paneToShow = paneToShow;
     }
     public MenuItemListener () {
@@ -22,11 +20,11 @@ public class MenuItemListener extends SoundButtonListener {
     @Override
     public void actionPerformed(ActionEvent event) {
         super.actionPerformed(event);
-        if (frame == null || paneToShow == null) {
+        if (paneToShow == null) {
             // TODO: cleanup stuff
             LogManager.getLogger(this.getClass()).info("Application closed");
             System.exit(0);
         }
-        frame.show(paneToShow);
+        GameFrame.getInstance().show(paneToShow);
     }
 }
