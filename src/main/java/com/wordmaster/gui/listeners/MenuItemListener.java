@@ -1,30 +1,32 @@
 package com.wordmaster.gui.listeners;
 
-import com.wordmaster.gui.GameFrame;
-import org.apache.logging.log4j.LogManager;
+import com.wordmaster.gui.View;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class MenuItemListener extends SoundButtonListener {
-    protected GameFrame.Pane paneToShow;
+    private View.Pages pageToShow;
+    private View view;
 
-    public MenuItemListener (GameFrame.Pane paneToShow) {
-        super(SoundType.MENU);
-        this.paneToShow = paneToShow;
+    public MenuItemListener (View view, View.Pages pageToShow) {
+        super(view, SoundType.MENU);
+        this.pageToShow = pageToShow;
+        this.view = view;
     }
-    public MenuItemListener () {
-        super(SoundType.MENU);
-
+    public MenuItemListener(View view) {
+        super(view, SoundType.MENU);
+        this.view = view;
     }
 
     @Override
     public void actionPerformed(ActionEvent event) {
         super.actionPerformed(event);
-        if (paneToShow == null) {
-            // TODO: cleanup stuff
-            LogManager.getLogger(this.getClass()).info("Application closed");
-            System.exit(0);
+        if (pageToShow == null) {
+            view.destroy();
+        } else {
+            view.showPage(pageToShow);
         }
-        GameFrame.getInstance().show(paneToShow);
+
     }
 }

@@ -11,17 +11,19 @@ import java.awt.*;
  * @version 1.0
  */
 public class GameFrame {
+    /*
+
     private CardLayout panes = new CardLayout();
     private JFrame gameFrame;
-    private final static int FRAME_WIDTH = 640;
-    private final static int FRAME_HEIGHT = 480;
+    private final static int DEFAULT_FRAME_WIDTH = 640;
+    private final static int DEFAULT_FRAME_HEIGHT = DEFAULT_FRAME_WIDTH*3/4;
     private static GameFrame instance = null;
 
     private GameFrame() {
         gameFrame = new JFrame();
         gameFrame.setTitle("Wordmaster");
         gameFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        gameFrame.setSize(new Dimension(FRAME_WIDTH, FRAME_HEIGHT));
+        gameFrame.setSize(new Dimension(DEFAULT_FRAME_WIDTH, DEFAULT_FRAME_HEIGHT));
     }
 
     public static GameFrame getInstance() {
@@ -31,9 +33,7 @@ public class GameFrame {
         return instance;
     }
 
-    /**
-     * Enumerates all main game panes
-     */
+
     public enum Pane {
         MAIN, NEW_GAME, GAME, SETTINGS
     }
@@ -51,9 +51,7 @@ public class GameFrame {
         gameFrame.getContentPane().add(pf.buildSettingsPane(), Pane.SETTINGS.toString());
     }
 
-    /**
-     * Initializes all panes and shows the frame.
-     */
+
     public void run() {
 
         gameFrame.setVisible(true);
@@ -66,4 +64,6 @@ public class GameFrame {
     public JFrame getFrame() {
         return gameFrame;
     }
+
+    */
 }

@@ -1,9 +1,7 @@
-package com.wordmaster.gui;
+package com.wordmaster.gui.custom;
 
 import com.wordmaster.gui.custom.TopMenuLabel;
 import com.wordmaster.gui.listeners.MenuItemListener;
-import com.wordmaster.gui.listeners.SaveSettingsListener;
-import com.wordmaster.model.Settings;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,6 +13,9 @@ import java.awt.*;
  * @version 1.1
  */
 public class PaneFactory {
+
+    /*
+
 
     public JComponent buildStartupPane() {
         Box startupPane = Box.createVerticalBox();
@@ -49,7 +50,7 @@ public class PaneFactory {
 
     public JComponent buildSettingsPane() {
         // TODO: use grid bag layout
-        JPanel settingsPane = new JPanel();
+        JPanel settingsPane = new JPanel(new GridBagLayout());
         settingsPane.setLayout(new BorderLayout());
 
         // Top panel name label
@@ -72,13 +73,13 @@ public class PaneFactory {
         soundControls.add(new JLabel("Полосочка"));
         soundControls.add(Box.createHorizontalGlue());
         // Language settings
-        languageControls.add(Box.createHorizontalGlue());
-        languageControls.add(new JLabel("Язык:"));
-        Settings.Language languages[] = {   Settings.Language.RUSSIAN,
-                                            Settings.Language.ENGLISH};
-        JComboBox<Settings.Language> languageJComboBox = new JComboBox<Settings.Language>(languages);
-        languageControls.add(new JComboBox<Settings.Language>(languages));
-        languageControls.add(Box.createHorizontalGlue());
+//        languageControls.add(Box.createHorizontalGlue());
+//        languageControls.add(new JLabel("Язык:"));
+//        Settings.Language languages[] = {   Settings.Language.RUSSIAN,
+//                                            Settings.Language.ENGLISH};
+//        JComboBox<Settings.Language> languageJComboBox = new JComboBox<Settings.Language>(languages);
+//        languageControls.add(new JComboBox<Settings.Language>(languages));
+//        languageControls.add(Box.createHorizontalGlue());
         // Look and Feel settings
         lafControls.add(Box.createHorizontalGlue());
 
@@ -106,7 +107,7 @@ public class PaneFactory {
         JButton backBtn = new JButton("В меню");
         backBtn.addActionListener(new MenuItemListener(GameFrame.Pane.MAIN));
         JButton saveBtn = new JButton("Сохранить");
-        saveBtn.addActionListener(new SaveSettingsListener(lafjComboBox, languageJComboBox));
+        //saveBtn.addActionListener(new SaveSettingsListener(lafjComboBox, languageJComboBox));
 
         bottomButtons.add(Box.createHorizontalGlue());
         bottomButtons.add(backBtn);
@@ -285,4 +286,6 @@ public class PaneFactory {
 
         return gamePane;
     }
+
+    */
 }
