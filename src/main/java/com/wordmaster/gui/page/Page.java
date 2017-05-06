@@ -30,5 +30,8 @@ public abstract class Page {
             updateLanguage();
         }
     }
+    public void postHide() {
+
+    }
     protected abstract void updateLanguage();
 }

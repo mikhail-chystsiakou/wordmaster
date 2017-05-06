@@ -1,4 +1,4 @@
-package com.wordmaster.gui;
+package com.wordmaster.gui.custom;
 
 import javax.swing.*;
 import java.awt.*;

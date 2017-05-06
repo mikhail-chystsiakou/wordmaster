@@ -1,13 +1,16 @@
 package com.wordmaster.gui.page;
 
 import com.wordmaster.gui.custom.ButtonFactory;
-import com.wordmaster.gui.LabelFactory;
+import com.wordmaster.gui.custom.LabelFactory;
 import com.wordmaster.gui.View;
 import com.wordmaster.gui.custom.LimitCharactersDocument;
+import com.wordmaster.gui.custom.WordmasterUtils;
 import com.wordmaster.gui.listeners.MenuItemListener;
 import com.wordmaster.model.ComputerPlayer;
+import com.wordmaster.model.GameField;
 import com.wordmaster.model.GameModel;
 import com.wordmaster.model.Player;
+import com.wordmaster.model.exception.ModelInitializeException;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -17,12 +20,31 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 
 public class NewGameSettingsPage extends Page {
     private Map<Labels, JLabel> pageLabels = new HashMap<>();
     private Map<Buttons, JButton> pageButtons = new HashMap<>();
     private Map<TitledBorders, TitledBorder> pageTitledBorders = new HashMap<>();
+
+    private JTextField firstPlayerNameInput;
+    private JTextField secondPlayerNameInput;
+
+    private JComboBox<ComputerPlayer.Difficulty> firstPlayerDifficultyInput;
+    private JComboBox<ComputerPlayer.Difficulty> secondPlayerDifficultyInput;
+
+    private JComboBox<Integer> firstPlayerDelayInput;
+    private JComboBox<Integer> secondPlayerDelayInput;
+
+    private JCheckBox firstPlayerIsComputerInput;
+    private JCheckBox secondPlayerIsComputerInput;
+
+    private JComboBox<Integer> gameTimeInput;
+    private JComboBox<Integer> moveTimeInput;
+
+    private JTextField startWordInput;
+
     public NewGameSettingsPage(View parentView) {
         super(parentView);
     }
@@ -81,86 +103,40 @@ public class NewGameSettingsPage extends Page {
         JLabel startWord = LabelFactory.getStandardLabel();
         pageLabels.put(Labels.START_WORD, startWord);
 
-        JTextField firstPlayerNameInput = getLimitedTextField(Player.MAX_NAME_LENGTH);
-        JTextField secondPlayerNameInput = getLimitedTextField(Player.MAX_NAME_LENGTH);
+        firstPlayerNameInput = getLimitedTextField(Player.MAX_NAME_LENGTH);
+        secondPlayerNameInput = getLimitedTextField(Player.MAX_NAME_LENGTH);
 
-        JComboBox<ComputerPlayer.Difficulty> firstPlayerDifficultyInput =
+        firstPlayerDifficultyInput =
                 getWideComboBox(ComputerPlayer.Difficulty.values(), ComputerPlayer.Difficulty.EASY);
         firstPlayerDifficultyInput.setEnabled(false);
-        JComboBox<ComputerPlayer.Difficulty> secondPlayerDifficultyInput =
+        secondPlayerDifficultyInput =
                 getWideComboBox(ComputerPlayer.Difficulty.values(), ComputerPlayer.Difficulty.EASY);
-        secondPlayerDifficultyInput.setFont(new Font("Arial", Font.PLAIN, 16));
-        secondPlayerDifficultyInput.setPreferredSize(new Dimension(100, 25));
         secondPlayerDifficultyInput.setEnabled(false);
 
-        JComboBox<Integer> firstPlayerDelayInput = getSmallComboBox(new Integer[]{1, 5, 10}, 5);
+        firstPlayerDelayInput = getSmallComboBox(new Integer[]{1, 5, 10}, 5);
         firstPlayerDelayInput.setEnabled(false);
-        JComboBox<Integer> secondPlayerDelayInput = getSmallComboBox(new Integer[]{1, 5, 10}, 5);
+        secondPlayerDelayInput = getSmallComboBox(new Integer[]{1, 5, 10}, 5);
         secondPlayerDelayInput.setEnabled(false);
 
-        JComboBox<Integer> gameTimeInput = getSmallComboBox(new Integer[]{1, 5, 10}, 5);
-        JComboBox<Integer> moveTimeInput = getSmallComboBox(new Integer[]{1, 5, 10}, 5);
+        gameTimeInput = getSmallComboBox(new Integer[]{1, 5, 10}, 5);
+        moveTimeInput = getSmallComboBox(new Integer[]{1, 5, 10}, 5);
 
-        JCheckBox firstPlayerIsComputerInput = getIsComputerCheckbox(
+        firstPlayerIsComputerInput = getIsComputerCheckbox(
                 firstPlayerDifficultyInput, firstPlayerDelayInput
         );
 
-        JCheckBox secondPlayerIsComputerInput = getIsComputerCheckbox(
+        secondPlayerIsComputerInput = getIsComputerCheckbox(
                 secondPlayerDifficultyInput, secondPlayerDelayInput
         );
 
 
-        JTextField startWordInput = getLimitedTextField(5);
+        startWordInput = getLimitedTextField(5);
 
         JButton backBtn = ButtonFactory.getMenuItemButton(parentView, View.Pages.STARTUP);
         pageButtons.put(Buttons.BACK, backBtn);
 
-        JButton startBtn = ButtonFactory.getMenuItemButton(parentView, View.Pages.GAME);
-        startBtn.addActionListener((ActionEvent e) -> {
-            // 0) make beep
-            // 1) create model
-            // 2) go to game
-            List<Player> playerList = new LinkedList<>();
-            Player firstPlayer;
-            Player secondPlayer;
-            if (firstPlayerIsComputerInput.isSelected()) {
-                firstPlayer = new ComputerPlayer(
-                    firstPlayerNameInput.getText(),
-                    (Integer) gameTimeInput.getSelectedItem(),
-                    (Integer) moveTimeInput.getSelectedItem(),
-                    (ComputerPlayer.Difficulty) firstPlayerDifficultyInput.getSelectedItem(),
-                    (Integer) firstPlayerDelayInput.getSelectedItem()
-                );
-            } else {
-                firstPlayer = new Player (
-                    firstPlayerNameInput.getText(),
-                    (Integer) gameTimeInput.getSelectedItem(),
-                    (Integer) moveTimeInput.getSelectedItem()
-                );
-            }
-            if (secondPlayerIsComputerInput.isSelected()) {
-                secondPlayer = new ComputerPlayer(
-                        secondPlayerNameInput.getText(),
-                        (Integer) gameTimeInput.getSelectedItem(),
-                        (Integer) moveTimeInput.getSelectedItem(),
-                        (ComputerPlayer.Difficulty) secondPlayerDifficultyInput.getSelectedItem(),
-                        (Integer) secondPlayerDelayInput.getSelectedItem()
-                );
-            } else {
-                secondPlayer = new Player (
-                    secondPlayerNameInput.getText(),
-                    (Integer) gameTimeInput.getSelectedItem(),
-                    (Integer) moveTimeInput.getSelectedItem()
-                );
-            }
-            playerList.add(firstPlayer);
-            playerList.add(secondPlayer);
-            GameModel.initialize(
-                    playerList,
-                    startWordInput.getText()
-            );
-            new MenuItemListener(parentView, View.Pages.GAME).actionPerformed(e);
-        });
+        JButton startBtn = ButtonFactory.getStandardButton();
+        startBtn.addActionListener(getNewGameBtnListener());
         pageButtons.put(Buttons.START, startBtn);
 
         JPanel firstPlayerPanel = new JPanel(new GridBagLayout());
@@ -296,14 +272,14 @@ public class NewGameSettingsPage extends Page {
         setTitledBordersText();
     }
 
-    protected void setButtonsText() {
+    private void setButtonsText() {
         ResourceBundle resourceBundle = currentLanguage.getResourceBundle();
 
         pageButtons.get(Buttons.START).setText(resourceBundle.getString("start"));
         pageButtons.get(Buttons.BACK).setText(resourceBundle.getString("back"));
     }
 
-    protected void setLabelsText() {
+    private void setLabelsText() {
         ResourceBundle resourceBundle = currentLanguage.getResourceBundle();
         pageLabels.get(Labels.HEADER).setText(resourceBundle.getString("new_game"));
         pageLabels.get(Labels.GAME_TIME).setText(resourceBundle.getString("game_time")+": ");
@@ -321,7 +297,7 @@ public class NewGameSettingsPage extends Page {
         pageLabels.get(Labels.SP_DELAY).setText(resourceBundle.getString("delay")+": ");
     }
 
-    protected void setTitledBordersText() {
+    private void setTitledBordersText() {
         ResourceBundle resourceBundle = currentLanguage.getResourceBundle();
         pageTitledBorders.get(TitledBorders.FP_BORDER).setTitle(resourceBundle.getString("player")+" 1");
         pageTitledBorders.get(TitledBorders.SP_BORDER).setTitle(resourceBundle.getString("player")+" 2");
@@ -364,5 +340,73 @@ public class NewGameSettingsPage extends Page {
         textField.setDocument(new LimitCharactersDocument(size));
         textField.setColumns(size);
         return textField;
+    }
+
+    private ActionListener getNewGameBtnListener() {
+        return (ActionEvent e) -> {
+            // validation
+            if (firstPlayerNameInput.getText().length() < Player.MIN_NAME_LENGTH) {
+                WordmasterUtils.showErrorAlert(parentView.getFrame(), "Invalid first player name");
+                return;
+            }
+            if (secondPlayerNameInput.getText().length() < Player.MIN_NAME_LENGTH) {
+                WordmasterUtils.showErrorAlert(parentView.getFrame(), "Invalid second player name");
+                return;
+            }
+            if (startWordInput.getText().length() < GameField.MIN_START_WORD_SIZE) {
+                WordmasterUtils.showErrorAlert(parentView.getFrame(), "Illegal start word size");
+                return;
+            }
+            if (firstPlayerNameInput.getText().equals(secondPlayerNameInput.getText())) {
+                WordmasterUtils.showErrorAlert(parentView.getFrame(), "Equal player names");
+                return;
+            }
+            List<Player> playerList = new LinkedList<>();
+            Player firstPlayer;
+            Player secondPlayer;
+
+            if (firstPlayerIsComputerInput.isSelected()) {
+                firstPlayer = new ComputerPlayer(
+                        firstPlayerNameInput.getText(),
+                        (Integer) gameTimeInput.getSelectedItem(),
+                        (Integer) moveTimeInput.getSelectedItem(),
+                        (ComputerPlayer.Difficulty) firstPlayerDifficultyInput.getSelectedItem(),
+                        (Integer) firstPlayerDelayInput.getSelectedItem()
+                );
+            } else {
+                firstPlayer = new Player (
+                        firstPlayerNameInput.getText(),
+                        (Integer) gameTimeInput.getSelectedItem(),
+                        (Integer) moveTimeInput.getSelectedItem()
+                );
+            }
+            if (secondPlayerIsComputerInput.isSelected()) {
+                secondPlayer = new ComputerPlayer(
+                        secondPlayerNameInput.getText(),
+                        (Integer) gameTimeInput.getSelectedItem(),
+                        (Integer) moveTimeInput.getSelectedItem(),
+                        (ComputerPlayer.Difficulty) secondPlayerDifficultyInput.getSelectedItem(),
+                        (Integer) secondPlayerDelayInput.getSelectedItem()
+                );
+            } else {
+                secondPlayer = new Player (
+                        secondPlayerNameInput.getText(),
+                        (Integer) gameTimeInput.getSelectedItem(),
+                        (Integer) moveTimeInput.getSelectedItem()
+                );
+            }
+            playerList.add(firstPlayer);
+            playerList.add(secondPlayer);
+            try {
+                GameModel newGameModel = new GameModel(playerList, null, startWordInput.getText());
+                GamePage gamePage = (GamePage)parentView.getPage(View.Pages.GAME);
+                gamePage.setModel(newGameModel);
+            } catch (ModelInitializeException exception) {
+                WordmasterUtils.showErrorAlert(parentView.getFrame(), "Illegal game initializing");
+                return;
+            }
+
+            new MenuItemListener(parentView, View.Pages.GAME).actionPerformed(e);
+        };
     }
 }

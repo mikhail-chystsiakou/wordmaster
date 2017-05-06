@@ -38,7 +38,7 @@ public class GameFrame {
         MAIN, NEW_GAME, GAME, SETTINGS
     }
 
-    public void initialize() {
+    public void setup() {
         gameFrame.getContentPane().setLayout(panes);
 
         PaneFactory pf = new PaneFactory();

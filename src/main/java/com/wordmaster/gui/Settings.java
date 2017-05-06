@@ -76,7 +76,6 @@ public class Settings implements Cloneable {
             wasModified = true;
         }
         if (settingsToApply.getLanguage() != language) {
-            System.out.println("new settings language value: " + settingsToApply.language+", was " + language);
             this.setLanguage(settingsToApply.getLanguage());
             wasModified = true;
         }

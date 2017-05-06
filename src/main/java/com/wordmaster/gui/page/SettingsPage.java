@@ -2,6 +2,8 @@ package com.wordmaster.gui.page;
 
 import com.wordmaster.gui.*;
 import com.wordmaster.gui.custom.ButtonFactory;
+import com.wordmaster.gui.custom.LabelFactory;
+import com.wordmaster.gui.custom.WordmasterUtils;
 import com.wordmaster.gui.i18n.Language;
 import com.wordmaster.gui.listeners.MenuItemListener;
 import com.wordmaster.gui.listeners.SoundButtonListener;
@@ -93,7 +95,7 @@ public class SettingsPage extends Page {
             parentView.applySettings(settings);   // sync call
             new MenuItemListener(parentView, View.Pages.SETTINGS).actionPerformed(e);
             Settings.saveSettings(Settings.DEFAULT_SETTINGS_FILE, parentView.getSettings(), () ->
-                JOptionPane.showMessageDialog(parentView.getFrame(), "Cannot save settings to file")
+                    WordmasterUtils.showErrorAlert(parentView.getFrame(), "Cannot save settings to file")
             );    // async call
             settings = parentView.getSettings();
         });

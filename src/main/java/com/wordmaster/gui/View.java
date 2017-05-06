@@ -1,6 +1,6 @@
 package com.wordmaster.gui;
 
-import com.alee.utils.SwingUtils;
+import com.wordmaster.gui.custom.WordmasterUtils;
 import com.wordmaster.gui.page.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +17,7 @@ public class View {
     private final static int FRAME_HEIGHT = 480;
     private final Settings settings = new Settings();
     private Map<Pages, Page> pages = new HashMap<>();
+    private Page currentPage;
 
     private boolean isInitialized = false;
 
@@ -52,7 +53,8 @@ public class View {
     }
 
     public void show() {
-        SwingUtils.invokeLater(() -> {
+
+        SwingUtilities.invokeLater(() -> {
             if (!isInitialized) {
                 initialize();
             }
@@ -67,10 +69,15 @@ public class View {
     }
 
     public void showPage(Pages page) {
-        SwingUtils.invokeLater(() -> {
-            pages.get(page).preShow();
+        SwingUtilities.invokeLater(() -> {
+            Page newShowPage = pages.get(page);
+            newShowPage.preShow();
             CardLayout layout = (CardLayout)frame.getContentPane().getLayout();
             layout.show(frame.getContentPane(), page.toString());
+            if (currentPage != null) {
+                currentPage.postHide();
+            }
+            currentPage = newShowPage;
         });
     }
 
@@ -83,13 +90,13 @@ public class View {
         Settings.SupportedLAF previousLAF = settings.getLAF();
         if (!settings.applySettings(settingsToApply)) return;
         if (!previousLAF.equals(settings.getLAF())) {
-            SwingUtils.invokeLater(() -> {
+            SwingUtilities.invokeLater(() -> {
                 try {
                     UIManager.setLookAndFeel(settings.getLAF().getPackageString());
                     SwingUtilities.updateComponentTreeUI(frame);
                 } catch (Exception e) {
                     logger.error("Cannot set laf {}", settings.getLAF(), e);
-                    JOptionPane.showMessageDialog(frame, "Cannot set Look&Feel");
+                    WordmasterUtils.showErrorAlert(frame, "Cannot set Look&Feel");
                 }
             });
         }
@@ -98,4 +105,8 @@ public class View {
         return settings;
     }
     public JFrame getFrame() {return frame;}
+
+    public Page getPage(Pages page) {
+        return pages.get(page);
+    }
 }
