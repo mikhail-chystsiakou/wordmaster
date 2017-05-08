@@ -3,15 +3,11 @@ package com.wordmaster.gui;
 import com.wordmaster.gui.i18n.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-//import com.sun.source.tree.*;
-//import com.sun.source.util.*;
 
 import javax.swing.*;
 import javax.xml.bind.*;
 import javax.xml.bind.annotation.*;
-import javax.xml.crypto.dsig.spec.ExcC14NParameterSpec;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
@@ -57,7 +53,7 @@ public class Settings implements Cloneable {
         };
         public abstract String getPackageString();
     }
-
+    // for the jaxb
     public Settings(){
 
     }
@@ -65,7 +61,6 @@ public class Settings implements Cloneable {
     public Settings(Settings settingsToClone) {
         this.applySettings(settingsToClone);
     }
-
 
 
     public boolean applySettings(Settings settingsToApply) {
@@ -117,7 +112,6 @@ public class Settings implements Cloneable {
                 JAXBContext context = JAXBContext.newInstance( Settings.class);
                 Unmarshaller um = context.createUnmarshaller();
                 savedSettings = (Settings)um.unmarshal(expectedSettingsFile);
-
             } catch (JAXBException e) {
                 logger.warn("Cannot load existing settings file {}", settingsFile, e);
                 onError.run();

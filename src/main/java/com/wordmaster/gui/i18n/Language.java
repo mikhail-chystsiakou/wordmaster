@@ -4,6 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.annotation.XmlEnum;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -13,15 +16,22 @@ public enum Language {
         protected Locale getLocale() {
             return new Locale("ru");
         }
+        protected String getAlphabet() {
+            return "абвгдеёжзийклмнопрстуфхцчшщъыьэюя";
+        }
     },
     ENGLISH {
         protected Locale getLocale() {
             return new Locale("en");
         }
+        protected String getAlphabet() {
+            return "abcdefghijklmnopqrstuvwxyz";
+        }
     };
 
     private static Logger logger = LoggerFactory.getLogger(Language.class);
     protected final static String RESOURCE_BUNDLE_BASE_NAME = "i18n.dictionary";
+    protected final static String VOCABULARY_PATH_PREFIX = "i18n/vocabulary_";
     protected ResourceBundle resourceBundle;
 
     public ResourceBundle getResourceBundle() {
@@ -36,8 +46,26 @@ public enum Language {
         }
         return resourceBundle;
     }
+    public InputStream getVocabulary() {
+        return this.getClass().getClassLoader()
+                .getResourceAsStream(VOCABULARY_PATH_PREFIX+getLocale().getLanguage()+".txt");
+    }
+    public boolean validateLetter(char c) {
+        return getAlphabet().indexOf(c) != -1;
+    }
+    public boolean validateWord(String s) {
+        for (char c : s.toCharArray()) {
+            if (getAlphabet().indexOf(c) == -1) {
+                System.out.println(c);
+                return false;
+            }
+        }
+        return true;
+    }
+
     public String toString() {
         return getResourceBundle().getString("locale_language");
     }
     protected abstract Locale getLocale();
+    protected abstract String getAlphabet();
 }

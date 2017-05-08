@@ -12,4 +12,8 @@ public class ComputerPlayer extends Player {
         this.difficulty = difficulty;
         this.delay = delay;
     }
+
+    public boolean isComputer() {
+        return true;
+    }
 }

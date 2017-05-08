@@ -1,17 +1,31 @@
 package com.wordmaster.model;
 
+import javax.xml.bind.annotation.*;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+@XmlType
+@XmlAccessorType(XmlAccessType.NONE)
+@XmlAccessorOrder(XmlAccessOrder.ALPHABETICAL)
 public class Player {
     public static final int MAX_NAME_LENGTH = 10;
     public static final int MIN_NAME_LENGTH = 2;
-    protected String name;
-    protected int score;
-    protected int gameTime;
-    protected int moveTime;
-    protected List<String> words = new LinkedList<>();
 
+    @XmlAttribute
+    protected String name;
+
+    @XmlAttribute
+    protected int score;
+
+    @XmlElement
+    @XmlList
+    protected List<String> words = Collections.synchronizedList(new LinkedList<>());
+
+    // for jaxb
+    public Player() {
+
+    }
 
     public Player(String name, int gameTime, int moveTime) {
         this.name = name;
@@ -20,6 +34,19 @@ public class Player {
     void addWord(String newWord) {
         score += newWord.length();
         words.add(newWord);
+    }
+
+    void removeLastWord() {
+        if (words.size() > 0) {
+            String lastWord = words.get(words.size()-1);
+            score -= lastWord.length();
+            words.remove(words.size()-1);
+        }
+    }
+
+    void clearWords() {
+        words.clear();
+        score = 0;
     }
 
     public String getName() {
@@ -44,5 +71,9 @@ public class Player {
             Player obj2compare = (Player) obj;
             return obj2compare.name.equals(name);
         } else return false;
+    }
+    @XmlAttribute
+    public boolean isComputer() {
+        return false;
     }
 }

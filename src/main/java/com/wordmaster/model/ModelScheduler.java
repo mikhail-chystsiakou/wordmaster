@@ -14,20 +14,21 @@ public class ModelScheduler {
     // изменения не произойдут до resume. Это значит, что возможно продолжение
     // вычислений в потоке, однако не обновление модели
     private boolean threadSuspendFlag = false;
+    private boolean threadDeathFlag = false;
     private boolean moveInProgressFlag = false;
 
-    public ModelScheduler(GameModel model) {
+    ModelScheduler(GameModel model) {
         this.model = model;
     }
 
     void runModelThread() {
-        logger.trace("starting model thread");
         modelThread = new Thread(() -> {
             model.modelThread();
         });
+        modelThread.setName("modelThread");
         modelThread.start();
     }
-    synchronized void checkOperationInProgressAndLock() {
+    synchronized void checkOperationInProgressAndLock() throws ModelStateException {
         if (moveInProgressFlag) {
             logger.error("Cannot make move cause another move is in progress");
             throw new ModelStateException("Another move in progress", null);
@@ -41,16 +42,6 @@ public class ModelScheduler {
     synchronized void endOperation() {
         moveInProgressFlag = false;
     }
-    // move
-    // sleep
-    // kill
-    synchronized void checkAndSleep() {
-
-    }
-    synchronized boolean checkDeath() {
-
-        return false;
-    }
 
     synchronized void waitForMove() {
         while(!moveInProgressFlag) {
@@ -62,12 +53,32 @@ public class ModelScheduler {
         }
     }
 
-    synchronized void destroyModelThread() {
-        try {
-            modelThread.join();
-        } catch(InterruptedException e) {
-            logger.error("model thread join was intertupted");
+    synchronized void raiseSleep() {
+        threadSuspendFlag = true;
+    }
+    synchronized void awake() {
+        threadSuspendFlag = false;
+        notify();
+    }
+    synchronized void checkAndSleep() {
+        while(threadSuspendFlag) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                logger.error("Interrupted during sleep", e);
+            }
         }
     }
 
+    synchronized void raiseDeath() {
+        logger.error("raising model death");
+        threadDeathFlag = true;
+        // if no move in progress
+        moveInProgressFlag = true;
+        notify();
+    }
+
+    synchronized boolean checkDeath() {
+        return threadDeathFlag;
+    }
 }

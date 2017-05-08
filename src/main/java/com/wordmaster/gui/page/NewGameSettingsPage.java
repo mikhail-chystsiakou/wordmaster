@@ -5,12 +5,16 @@ import com.wordmaster.gui.custom.LabelFactory;
 import com.wordmaster.gui.View;
 import com.wordmaster.gui.custom.LimitCharactersDocument;
 import com.wordmaster.gui.custom.WordmasterUtils;
+import com.wordmaster.gui.i18n.Language;
 import com.wordmaster.gui.listeners.MenuItemListener;
 import com.wordmaster.model.ComputerPlayer;
 import com.wordmaster.model.GameField;
 import com.wordmaster.model.GameModel;
 import com.wordmaster.model.Player;
+import com.wordmaster.model.algorithm.Vocabulary;
 import com.wordmaster.model.exception.ModelInitializeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -22,8 +26,11 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class NewGameSettingsPage extends Page {
+    private static final Logger logger = LoggerFactory.getLogger(NewGameSettingsPage.class);
     private Map<Labels, JLabel> pageLabels = new HashMap<>();
     private Map<Buttons, JButton> pageButtons = new HashMap<>();
     private Map<TitledBorders, TitledBorder> pageTitledBorders = new HashMap<>();
@@ -56,7 +63,7 @@ public class NewGameSettingsPage extends Page {
     }
 
     private enum Buttons {
-        BACK, START
+        BACK, START, RANDOM_GO
     }
 
     private enum TitledBorders {
@@ -138,6 +145,10 @@ public class NewGameSettingsPage extends Page {
         JButton startBtn = ButtonFactory.getStandardButton();
         startBtn.addActionListener(getNewGameBtnListener());
         pageButtons.put(Buttons.START, startBtn);
+
+        JButton randomGoBtn = ButtonFactory.getStandardButton();
+        randomGoBtn.addActionListener(getRandomToBtnListener());
+        pageButtons.put(Buttons.RANDOM_GO, randomGoBtn);
 
         JPanel firstPlayerPanel = new JPanel(new GridBagLayout());
         TitledBorder firstPlayerTitledBorder =  new TitledBorder("");
@@ -229,6 +240,8 @@ public class NewGameSettingsPage extends Page {
         bottomButtonsPanel.add(Box.createHorizontalGlue());
         bottomButtonsPanel.add(startBtn);
         bottomButtonsPanel.add(Box.createHorizontalGlue());
+        bottomButtonsPanel.add(randomGoBtn);
+        bottomButtonsPanel.add(Box.createHorizontalGlue());
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -277,6 +290,7 @@ public class NewGameSettingsPage extends Page {
 
         pageButtons.get(Buttons.START).setText(resourceBundle.getString("start"));
         pageButtons.get(Buttons.BACK).setText(resourceBundle.getString("back"));
+        pageButtons.get(Buttons.RANDOM_GO).setText(resourceBundle.getString("random_go"));
     }
 
     private void setLabelsText() {
@@ -342,71 +356,143 @@ public class NewGameSettingsPage extends Page {
         return textField;
     }
 
+    private List<Player> validateAndGetPlayers() {
+        // validation
+        String fpName = firstPlayerNameInput.getText();
+        String spName = secondPlayerNameInput.getText();
+
+        if (fpName.length() < Player.MIN_NAME_LENGTH ) {
+            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Invalid first player name");
+            return null;
+        }
+        if (spName.length() < Player.MIN_NAME_LENGTH) {
+            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Invalid second player name");
+            return null;
+        }
+        if (fpName.equals(spName)) {
+            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Equal player names");
+            return null;
+        }
+
+        List<Player> playerList = new LinkedList<>();
+        Player firstPlayer;
+        Player secondPlayer;
+
+        if (firstPlayerIsComputerInput.isSelected()) {
+            firstPlayer = new ComputerPlayer(
+                    fpName,
+                    (Integer) gameTimeInput.getSelectedItem(),
+                    (Integer) moveTimeInput.getSelectedItem(),
+                    (ComputerPlayer.Difficulty) firstPlayerDifficultyInput.getSelectedItem(),
+                    (Integer) firstPlayerDelayInput.getSelectedItem()
+            );
+        } else {
+            firstPlayer = new Player (
+                    fpName,
+                    (Integer) gameTimeInput.getSelectedItem(),
+                    (Integer) moveTimeInput.getSelectedItem()
+            );
+        }
+        if (secondPlayerIsComputerInput.isSelected()) {
+            secondPlayer = new ComputerPlayer(
+                    spName,
+                    (Integer) gameTimeInput.getSelectedItem(),
+                    (Integer) moveTimeInput.getSelectedItem(),
+                    (ComputerPlayer.Difficulty) secondPlayerDifficultyInput.getSelectedItem(),
+                    (Integer) secondPlayerDelayInput.getSelectedItem()
+            );
+        } else {
+            secondPlayer = new Player (
+                    spName,
+                    (Integer) gameTimeInput.getSelectedItem(),
+                    (Integer) moveTimeInput.getSelectedItem()
+            );
+        }
+        playerList.add(firstPlayer);
+        playerList.add(secondPlayer);
+        return playerList;
+    }
+
+    private String validateAndGetStartWord() {
+        // validation
+        Language language = parentView.getSettings().getLanguage();
+        String startWord = startWordInput.getText();
+
+        if (startWord.length() < GameField.MIN_START_WORD_SIZE || !language.validateWord(startWord)) {
+            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Illegal start word");
+            return null;
+        }
+        return startWord;
+    }
+    private Vocabulary getVocabulary() {
+        Language language = parentView.getSettings().getLanguage();
+        Future<Vocabulary> vocabulary = Vocabulary.getVocabulary(language);
+        if (!vocabulary.isDone()) {
+            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Wait please, vocabulary is still loading");
+            return null;
+        }
+        try {
+            return vocabulary.get();
+        } catch (ExecutionException | InterruptedException exception) {
+            logger.error("Exception during loading vocabulary", exception);
+            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Error during loading vocabulary");
+            return null;
+        }
+    }
+
+    private void startGame(List<Player> playerList, Vocabulary vocabulary, String startWord) {
+        try {
+            GameModel newGameModel = new GameModel(playerList, vocabulary, startWord);
+            GamePage gamePage = (GamePage)parentView.getPage(View.Pages.GAME);
+            gamePage.setModel(newGameModel);
+        } catch (ModelInitializeException e) {
+            logger.error("Illegal game initializing", e);
+            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Illegal game initializing");
+            return;
+        }
+        new MenuItemListener(parentView, View.Pages.GAME).actionPerformed(null);
+    }
+
     private ActionListener getNewGameBtnListener() {
         return (ActionEvent e) -> {
-            // validation
-            if (firstPlayerNameInput.getText().length() < Player.MIN_NAME_LENGTH) {
-                WordmasterUtils.showErrorAlert(parentView.getFrame(), "Invalid first player name");
-                return;
-            }
-            if (secondPlayerNameInput.getText().length() < Player.MIN_NAME_LENGTH) {
-                WordmasterUtils.showErrorAlert(parentView.getFrame(), "Invalid second player name");
-                return;
-            }
-            if (startWordInput.getText().length() < GameField.MIN_START_WORD_SIZE) {
-                WordmasterUtils.showErrorAlert(parentView.getFrame(), "Illegal start word size");
-                return;
-            }
-            if (firstPlayerNameInput.getText().equals(secondPlayerNameInput.getText())) {
-                WordmasterUtils.showErrorAlert(parentView.getFrame(), "Equal player names");
-                return;
-            }
-            List<Player> playerList = new LinkedList<>();
-            Player firstPlayer;
-            Player secondPlayer;
+            Vocabulary vocabulary = getVocabulary();
+            if (vocabulary == null) return;
 
-            if (firstPlayerIsComputerInput.isSelected()) {
-                firstPlayer = new ComputerPlayer(
-                        firstPlayerNameInput.getText(),
-                        (Integer) gameTimeInput.getSelectedItem(),
-                        (Integer) moveTimeInput.getSelectedItem(),
-                        (ComputerPlayer.Difficulty) firstPlayerDifficultyInput.getSelectedItem(),
-                        (Integer) firstPlayerDelayInput.getSelectedItem()
-                );
-            } else {
-                firstPlayer = new Player (
-                        firstPlayerNameInput.getText(),
-                        (Integer) gameTimeInput.getSelectedItem(),
-                        (Integer) moveTimeInput.getSelectedItem()
-                );
-            }
-            if (secondPlayerIsComputerInput.isSelected()) {
-                secondPlayer = new ComputerPlayer(
-                        secondPlayerNameInput.getText(),
-                        (Integer) gameTimeInput.getSelectedItem(),
-                        (Integer) moveTimeInput.getSelectedItem(),
-                        (ComputerPlayer.Difficulty) secondPlayerDifficultyInput.getSelectedItem(),
-                        (Integer) secondPlayerDelayInput.getSelectedItem()
-                );
-            } else {
-                secondPlayer = new Player (
-                        secondPlayerNameInput.getText(),
-                        (Integer) gameTimeInput.getSelectedItem(),
-                        (Integer) moveTimeInput.getSelectedItem()
-                );
-            }
-            playerList.add(firstPlayer);
-            playerList.add(secondPlayer);
-            try {
-                GameModel newGameModel = new GameModel(playerList, null, startWordInput.getText());
-                GamePage gamePage = (GamePage)parentView.getPage(View.Pages.GAME);
-                gamePage.setModel(newGameModel);
-            } catch (ModelInitializeException exception) {
-                WordmasterUtils.showErrorAlert(parentView.getFrame(), "Illegal game initializing");
-                return;
-            }
+            List<Player> players = validateAndGetPlayers();
+            if(players == null) return;
 
-            new MenuItemListener(parentView, View.Pages.GAME).actionPerformed(e);
+            String startWord = validateAndGetStartWord();
+            if (startWord == null) return;
+
+            startGame(players, vocabulary, startWord);
         };
     }
+
+    private ActionListener getRandomToBtnListener() {
+        return (ActionEvent e) -> {
+            try {
+                Vocabulary vocabulary = getVocabulary();
+                if (vocabulary == null) return;
+
+                ResourceBundle resourceBundle = currentLanguage.getResourceBundle();
+                String[] playerNames = resourceBundle.getString("player_names").split("\t*,");
+                int fpName = (int) (Math.random() * playerNames.length);
+                int spName;
+                do spName = (int) (Math.random() * playerNames.length); while (spName == fpName);
+
+                firstPlayerNameInput.setText(playerNames[fpName]);
+                secondPlayerNameInput.setText(playerNames[spName]);
+
+                List<Player> players = validateAndGetPlayers();
+                if (players == null) return;
+
+                String startWord = vocabulary.getRandomWord(GameField.MAX_START_WORD_SIZE);
+
+                startGame(players, vocabulary, startWord);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        };
+    }
+
 }

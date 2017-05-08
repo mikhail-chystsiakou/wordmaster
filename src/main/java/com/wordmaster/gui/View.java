@@ -2,6 +2,7 @@ package com.wordmaster.gui;
 
 import com.wordmaster.gui.custom.WordmasterUtils;
 import com.wordmaster.gui.page.*;
+import com.wordmaster.model.algorithm.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +54,6 @@ public class View {
     }
 
     public void show() {
-
         SwingUtilities.invokeLater(() -> {
             if (!isInitialized) {
                 initialize();
@@ -71,7 +71,13 @@ public class View {
     public void showPage(Pages page) {
         SwingUtilities.invokeLater(() -> {
             Page newShowPage = pages.get(page);
-            newShowPage.preShow();
+            try {
+                newShowPage.preShow();
+            } catch (PageException e) {
+                logger.warn(e.getMessage(), e);
+                WordmasterUtils.showErrorAlert(frame, e.getMessage());
+                return;
+            }
             CardLayout layout = (CardLayout)frame.getContentPane().getLayout();
             layout.show(frame.getContentPane(), page.toString());
             if (currentPage != null) {
@@ -100,6 +106,7 @@ public class View {
                 }
             });
         }
+        Vocabulary.loadVocabulary(settings.getLanguage());
     }
     public Settings getSettings() {
         return settings;

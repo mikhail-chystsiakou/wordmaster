@@ -1,9 +1,6 @@
 package com.wordmaster;
 
-import com.wordmaster.gui.GameFrame;
 import com.wordmaster.gui.View;
-import com.wordmaster.gui.listeners.SoundButtonListener;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**

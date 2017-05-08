@@ -1,18 +1,27 @@
 package com.wordmaster.model;
 
-// annotate with jaxb
-class Move {
-    private GameField.Cell cell;
-    private char newCellValue;
-    private char prevCellValue;
-    private GameField.Word resultWord;
+import javax.xml.bind.annotation.*;
 
-    public GameField.Word getResultWord() {
-        return resultWord;
+@XmlType
+@XmlAccessorType(XmlAccessType.NONE)
+public class Move {
+    @XmlAttribute
+    private int cellX;
+    @XmlAttribute
+    private int cellY;
+    @XmlAttribute
+    private char newCellValue = GameField.EMPTY_CELL_VALUE;
+    @XmlAttribute
+    private char prevCellValue = GameField.EMPTY_CELL_VALUE;
+    @XmlElement
+    private int[][] resultWord;
+
+    public GameField.Word getResultWord(GameField field) {
+        return field.getWord(resultWord);
     }
 
     public void setResultWord(GameField.Word resultWord) {
-        this.resultWord = resultWord;
+        this.resultWord = resultWord.toArray();
     }
 
     public char getPrevCellValue() {
@@ -31,12 +40,31 @@ class Move {
         this.newCellValue = newCellValue;
     }
 
-    public GameField.Cell getCell() {
-        return cell;
+    public GameField.Cell getCell(GameField field) {
+        return field.getCell(cellX, cellY);
     }
 
     public void setCell(GameField.Cell cell) {
-        this.cell = cell;
+        this.cellX = cell.getX();
+        this.cellY = cell.getY();
+        this.prevCellValue = cell.getValue();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{ Move: {");
+        sb.append("[");
+        sb.append(cellX);
+        sb.append(", ");
+        sb.append(cellY);
+        sb.append("] ");
+        sb.append(", prev char: ");
+        sb.append(prevCellValue);
+        sb.append(", new char: ");
+        sb.append(newCellValue);
+        sb.append("}}");
+        return sb.toString();
     }
 
 }
