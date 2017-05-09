@@ -19,9 +19,11 @@ public class ReversedPrefixTree extends PrefixTree {
         return new ReversedPrefixTree();
     }
 
-    public ReversedPrefixTree goTo(String wordPart) {
+    ReversedPrefixTree goTo(String wordPart) {
         return (ReversedPrefixTree)super.goTo(wordPart);
     }
-
+    ReversedPrefixTree goTo(char wordPart) {
+        return (ReversedPrefixTree)super.goTo(wordPart);
+    }
 }
 

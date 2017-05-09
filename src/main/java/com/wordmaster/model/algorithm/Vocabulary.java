@@ -4,6 +4,7 @@ import com.wordmaster.gui.i18n.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,14 +21,14 @@ public class Vocabulary {
         if (!vocabularyMap.containsKey(language)) {
             FutureTask<Vocabulary> loadingTask = new FutureTask<>(() -> {
                 try {
-                    InputStream is = language.getVocabulary();
                     Vocabulary vocabulary = new Vocabulary();
+                    InputStream is = language.getVocabulary();
                     vocabulary.prefixTree.loadFromStream(is);
+                    is = language.getVocabulary();
                     vocabulary.reversedPrefixTree.loadFromStream(is);
                     return vocabulary;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return null;
+                } catch (IOException e) {
+                    throw new VocabularyException("Cannot load tree", e);
                 }
             });
             new Thread(loadingTask).start();
@@ -62,7 +63,6 @@ public class Vocabulary {
         String randomWord;
         int i = 0;
         do {
-            System.out.println(wordSize);
             randomWord = getRandomWordHelper(prefixTree.getRandomSubtree(), wordSize-1);
             i++;
         } while (randomWord == null && i < 5);

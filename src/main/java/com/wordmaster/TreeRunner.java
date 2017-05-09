@@ -26,7 +26,7 @@ public class TreeRunner {
             nextWord = bf.readLine();
         }
         System.out.println(System.currentTimeMillis() - t);
-        PrefixTree tree2 = tree.goTo("кал");
+        //PrefixTree tree2 = tree.goTo("кал");
         System.out.println();
     }
 }

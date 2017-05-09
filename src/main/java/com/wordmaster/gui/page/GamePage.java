@@ -1,14 +1,12 @@
 package com.wordmaster.gui.page;
 
+import com.wordmaster.gui.Settings;
 import com.wordmaster.gui.custom.ButtonFactory;
 import com.wordmaster.gui.custom.LabelFactory;
 import com.wordmaster.gui.View;
 import com.wordmaster.gui.custom.WordmasterUtils;
 import com.wordmaster.gui.i18n.Language;
-import com.wordmaster.model.GameField;
-import com.wordmaster.model.GameModel;
-import com.wordmaster.model.ModelAware;
-import com.wordmaster.model.Player;
+import com.wordmaster.model.*;
 import com.wordmaster.model.exception.ModelException;
 import com.wordmaster.model.exception.ModelStateException;
 import org.slf4j.Logger;
@@ -66,16 +64,24 @@ public class GamePage extends Page implements ModelAware {
         }
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(keyListener);
         // update players names
-        System.out.println(model.getPlayers().get(0).getName());
         pageLabels.get(Labels.FP_HEADER).setText(model.getPlayers().get(0).getName());
         pageLabels.get(Labels.SP_HEADER).setText(model.getPlayers().get(1).getName());
+
+        if (parentView.getSettings().getLAF() != Settings.SupportedLAF.DARKULA) {
+            DEFAULT_CELL_COLOR = Color.WHITE;
+            SELECTED_CELL_COLOR = Color.LIGHT_GRAY;
+        } else {
+            DEFAULT_CELL_COLOR = Color.DARK_GRAY;
+            SELECTED_CELL_COLOR = Color.GRAY;
+        }
+
+        if (!model.isReplay()) model.startGame();
+        syncWithModel();
     }
 
     public void postHide() {
         super.postHide();
         KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(keyListener);
-        model.removeModelListener(this);
-        model.destroy();
     }
 
     public void initialize() {
@@ -129,6 +135,7 @@ public class GamePage extends Page implements ModelAware {
         pageLabels.put(Labels.CURRENT_PLAYER_NAME, currentPlayerName);
 
         JButton backBtn = ButtonFactory.getMenuItemButton(parentView, View.Pages.STARTUP);
+        backBtn.addActionListener(getBackBtnListener());
         pageButtons.put(Buttons.BACK, backBtn);
 
         JButton undoBtn = ButtonFactory.getStandardButton();
@@ -230,17 +237,19 @@ public class GamePage extends Page implements ModelAware {
         secondPlayerPanel.add(spScrollPane, gbc);
 
         Box headerPanel = Box.createVerticalBox();
-        JPanel headerPanelRow1 = new JPanel();
-        headerPanelRow1.add(gameTime);
+        headerPanel.setMaximumSize(new Dimension(280, 30));
+        headerPanel.setPreferredSize(new Dimension(280, 30));
+        headerPanel.setMinimumSize(new Dimension(280, 30));
+
         JPanel headerPanelRow2 = new JPanel();
         headerPanelRow2.add(currentPlayerLabel);
         headerPanelRow2.add(currentPlayerName);
         headerPanelRow2.add(Box.createRigidArea(new Dimension(10, 10)));
         headerPanelRow2.add(gameMoveLabel);
         headerPanelRow2.add(gameMove);
-        headerPanel.add(headerPanelRow1);
+        headerPanel.add(Box.createVerticalGlue());
         headerPanel.add(headerPanelRow2);
-        headerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
+        headerPanel.add(Box.createVerticalGlue());
 
         JPanel gameFieldPanel = new JPanel(
                 new GridLayout(GameField.FIELD_WIDTH, GameField.FIELD_HEIGHT));
@@ -312,7 +321,6 @@ public class GamePage extends Page implements ModelAware {
         updateField();
 
         // update players names
-        System.out.println(model.getPlayers().get(0).getName());
         pageLabels.get(Labels.FP_HEADER).setText(model.getPlayers().get(0).getName());
         pageLabels.get(Labels.SP_HEADER).setText(model.getPlayers().get(1).getName());
     }
@@ -321,22 +329,14 @@ public class GamePage extends Page implements ModelAware {
         JLabel[][] gameFieldLabels = new JLabel[GameField.FIELD_HEIGHT][GameField.FIELD_WIDTH];
         for (int y = 0; y < GameField.FIELD_HEIGHT; y++) {
             for (int x = 0; x < GameField.FIELD_WIDTH; x++) {
-                JLabel fieldLabel = new JLabel(String.valueOf(GameField.EMPTY_CELL_VALUE));
+                JLabel fieldLabel = LabelFactory.getLetterCellLabel();
                 fieldLabel.setBackground(DEFAULT_CELL_COLOR);
                 // every cell draws only left and top border
-                if (y == 0) {
-                    // top row
-                    if (x != 0) {
-                        fieldLabel.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, Color.BLACK));
-                    }
+                if (x == 0) {
+                    fieldLabel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.BLACK));
                 }
                 else {
-                    if (x == 0) {
-                        fieldLabel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.BLACK));
-                    }
-                    else {
-                        fieldLabel.setBorder(BorderFactory.createMatteBorder(1, 1, 0, 0, Color.BLACK));
-                    }
+                    fieldLabel.setBorder(BorderFactory.createMatteBorder(1, 1, 0, 0, Color.BLACK));
                 }
                 fieldLabel.setOpaque(true);
                 fieldLabel.addMouseListener(getFieldCellMouseListener());
@@ -352,6 +352,7 @@ public class GamePage extends Page implements ModelAware {
             for (int x = 0; x < GameField.FIELD_WIDTH; x++) {
                 GameField.Cell cell = model.getGameField().getCell(x, y);
                 gameFieldLabels[y][x].setText(String.valueOf(cell.getValue()));
+                gameFieldLabels[y][x].setBackground(DEFAULT_CELL_COLOR);
             }
         }
         setCell = null;
@@ -416,7 +417,7 @@ public class GamePage extends Page implements ModelAware {
                 } else {
                     // after empty or clicked empty can not be set
                     if (selectedCell != null &&
-                            getFieldLabelByCell(selectedCell).getText().charAt(0) == EMPTY_CELL_VALUE
+                            selectedCell.isEmpty()
                             || currentWord.contains(setCell)) {
                         clearWord();
                     }
@@ -467,8 +468,8 @@ public class GamePage extends Page implements ModelAware {
 
                     if (selectedLabel.getText().charAt(0) == EMPTY_CELL_VALUE
                             || selectedCell == setCell) {
-                        if (setCell != null) {
-                            selectedLabel.setText(String.valueOf(EMPTY_CELL_VALUE));
+                        if (setCell != null) {;
+                            getFieldLabelByCell(setCell).setText(String.valueOf(EMPTY_CELL_VALUE));
                         }
                         if (setCell == selectedCell) {
                             currentWord.popLetter();
@@ -487,8 +488,9 @@ public class GamePage extends Page implements ModelAware {
     private ActionListener getApplyBtnListener() {
         return (ActionEvent e) -> {
             if (setCell == null) {
+                ResourceBundle resourceBundle = currentLanguage.getResourceBundle();
                 WordmasterUtils.showErrorAlert(parentView.getFrame(),
-                                            "You must set letter at one field");
+                        resourceBundle.getString("e_no_letter"));
                 return;
             }
             if (selectedCell != null && !currentWord.isEmpty()) {
@@ -518,7 +520,7 @@ public class GamePage extends Page implements ModelAware {
             try {
                 model.redo();
             } catch (ModelStateException ex) {
-                WordmasterUtils.showErrorAlert(parentView.getFrame(), "Cannot undo");
+                WordmasterUtils.showErrorAlert(parentView.getFrame(), "Cannot redo");
             }
         };
     }
@@ -526,9 +528,7 @@ public class GamePage extends Page implements ModelAware {
     private ActionListener getSaveBtnListener() {
         return (ActionEvent e) -> {
             try {
-                model.pause();
                 saveModel();
-                model.resume();
             } catch (ModelException ex) {
                 logger.error("Cannot save game", ex);
                 WordmasterUtils.showErrorAlert(parentView.getFrame(), "Cannot save game");
@@ -542,40 +542,45 @@ public class GamePage extends Page implements ModelAware {
         };
     }
 
+    private ActionListener getBackBtnListener() {
+        return (ActionEvent e) -> {
+            model.removeModelListener(this);
+            model.destroy();
+        };
+    }
+
     private void saveModel() {
-        System.out.println("saving model");
         model.pause();
         JFileChooser fc = new JFileChooser();
         fc.setCurrentDirectory(new File("./"));
         fc.showSaveDialog(parentView.getFrame());
         File file = fc.getSelectedFile();
         if (file == null) {
+            model.resume();
             return;
         }
         try {
             model.save(file);
+            model.resume();
         }
         catch (ModelException exception) {
             WordmasterUtils.showErrorAlert(parentView.getFrame(), "Model save error");
         }
-        model.resume();
     }
 
     private void syncWithModel() {
         // update current player
+        model.pause();
         currentPlayer = model.getCurrentPlayer();
         pageLabels.get(Labels.CURRENT_PLAYER_NAME).setText(currentPlayer.getName());
-
         // update current move
         pageLabels.get(Labels.MOVE_NUMBER).setText(String.valueOf(model.getCurrentMove()));
 
         // update scores
         pageLabels.get(Labels.FP_SCORE).setText(String.valueOf(model.getPlayers().get(0).getScore()));
         pageLabels.get(Labels.SP_SCORE).setText(String.valueOf(model.getPlayers().get(1).getScore()));
-
         // update field
         updateField();
-
         // update players lists
         pageWordLists.get(WordLists.FP_LIST).clear();
         pageWordLists.get(WordLists.SP_LIST).clear();
@@ -585,35 +590,44 @@ public class GamePage extends Page implements ModelAware {
         for (String word : model.getPlayers().get(1).getWords()) {
             pageWordLists.get(WordLists.SP_LIST).addElement(word);
         }
-
         updateButtonsState();
+
+        model.resume();
     }
 
     private void updateButtonsState() {
-        if (!currentPlayer.isComputer()) {
-            if (model.isReplay()) {
-                pageButtons.get(Buttons.APPLY).setEnabled(false);
-                pageButtons.get(Buttons.SAVE).setEnabled(false);
-                pageButtons.get(Buttons.SURRENDER).setEnabled(false);
-            } else {
-                pageButtons.get(Buttons.APPLY).setEnabled(true);
-            }
+        if (model.isReplay()) {
+            pageButtons.get(Buttons.APPLY).setEnabled(false);
+            pageButtons.get(Buttons.SAVE).setEnabled(false);
+            pageButtons.get(Buttons.SURRENDER).setEnabled(false);
             pageButtons.get(Buttons.UNDO).setEnabled(model.canUndo());
             pageButtons.get(Buttons.REDO).setEnabled(model.canRedo());
+        } else {
+            if (!currentPlayer.isComputer()) {
+                pageButtons.get(Buttons.UNDO).setEnabled(model.canUndo());
+                pageButtons.get(Buttons.REDO).setEnabled(model.canRedo());
+                pageButtons.get(Buttons.APPLY).setEnabled(true);
+                pageButtons.get(Buttons.SURRENDER).setEnabled(true);
+            } else {
+                pageButtons.get(Buttons.UNDO).setEnabled(false);
+                pageButtons.get(Buttons.REDO).setEnabled(false);
+                pageButtons.get(Buttons.APPLY).setEnabled(false);
+                pageButtons.get(Buttons.SURRENDER).setEnabled(false);
+            }
         }
+
     }
 
     @Override
-    public void onMove() {
+    public void onMove(GameModel model) {
         try {
             SwingUtilities.invokeAndWait(this::syncWithModel);
         } catch (Exception e) {
             logger.error("Cannot apply move model changes", e);
         }
     }
-
     @Override
-    public void onFinish() {
+    public void onFinish(GameModel model) {
         try {
             SwingUtilities.invokeAndWait(() -> {
                 syncWithModel();
@@ -631,10 +645,27 @@ public class GamePage extends Page implements ModelAware {
         }
     }
     @Override
-    public void onInvalidMove() {
+    public void onInvalidMove(GameModel model, int type) {
         try {
             SwingUtilities.invokeAndWait(() -> {
-                WordmasterUtils.showErrorAlert(parentView.getFrame(), "Invalid move");
+                ResourceBundle resourceBundle = currentLanguage.getResourceBundle();
+
+                switch (type) {
+                    case Move.ALREADY_USED : {
+                        WordmasterUtils.showErrorAlert(parentView.getFrame(),
+                                                resourceBundle.getString("e_word_used"));
+                        break;
+                    }
+                    case Move.INVALID_WORD : {
+                        WordmasterUtils.showErrorAlert(parentView.getFrame(),
+                                                resourceBundle.getString("e_invalid_word"));
+                        break;
+                    }
+                    default: {
+                        WordmasterUtils.showErrorAlert(parentView.getFrame(),
+                                                resourceBundle.getString("e_invalid_move"));
+                    }
+                }
                 updateButtonsState();
             });
         } catch (Exception e) {

@@ -2,6 +2,7 @@ package com.wordmaster.gui;
 
 import com.wordmaster.gui.custom.WordmasterUtils;
 import com.wordmaster.gui.page.*;
+import com.wordmaster.model.GameField;
 import com.wordmaster.model.algorithm.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,7 @@ public class View {
             frame.getContentPane().add(pages.get(key).getJComponent(), key.toString());
         }
         Settings loadedSettings = Settings.loadSettings(Settings.DEFAULT_SETTINGS_FILE, () ->
-                System.err.println("Cannot load settings file")
+                WordmasterUtils.showErrorAlert(frame, "Cannot load settings")
         );
         applySettings(loadedSettings);
         isInitialized = true;

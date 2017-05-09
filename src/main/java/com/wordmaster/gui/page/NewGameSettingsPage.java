@@ -47,9 +47,6 @@ public class NewGameSettingsPage extends Page {
     private JCheckBox firstPlayerIsComputerInput;
     private JCheckBox secondPlayerIsComputerInput;
 
-    private JComboBox<Integer> gameTimeInput;
-    private JComboBox<Integer> moveTimeInput;
-
     private JTextField startWordInput;
 
     public NewGameSettingsPage(View parentView) {
@@ -57,7 +54,7 @@ public class NewGameSettingsPage extends Page {
     }
 
     private enum Labels {
-        HEADER, GAME_TIME, MOVE_TIME, START_WORD,
+        HEADER, START_WORD,
         FP_NAME, FP_IS_COMPUTER, FP_DIFFICULTY, FP_DELAY,
         SP_NAME, SP_IS_COMPUTER, SP_DIFFICULTY, SP_DELAY,
     }
@@ -101,12 +98,6 @@ public class NewGameSettingsPage extends Page {
         JLabel secondPlayerDelay = LabelFactory.getStandardLabel();
         pageLabels.put(Labels.SP_DELAY, secondPlayerDelay);
 
-        JLabel gameTime = LabelFactory.getStandardLabel();
-        pageLabels.put(Labels.GAME_TIME, gameTime);
-
-        JLabel moveTime = LabelFactory.getStandardLabel();
-        pageLabels.put(Labels.MOVE_TIME, moveTime);
-
         JLabel startWord = LabelFactory.getStandardLabel();
         pageLabels.put(Labels.START_WORD, startWord);
 
@@ -120,13 +111,10 @@ public class NewGameSettingsPage extends Page {
                 getWideComboBox(ComputerPlayer.Difficulty.values(), ComputerPlayer.Difficulty.EASY);
         secondPlayerDifficultyInput.setEnabled(false);
 
-        firstPlayerDelayInput = getSmallComboBox(new Integer[]{1, 5, 10}, 5);
+        firstPlayerDelayInput = getDelayComboBox(new Integer[]{0, 100, 500, 1000}, 500);
         firstPlayerDelayInput.setEnabled(false);
-        secondPlayerDelayInput = getSmallComboBox(new Integer[]{1, 5, 10}, 5);
+        secondPlayerDelayInput = getDelayComboBox(new Integer[]{0, 100, 500, 1000}, 500);
         secondPlayerDelayInput.setEnabled(false);
-
-        gameTimeInput = getSmallComboBox(new Integer[]{1, 5, 10}, 5);
-        moveTimeInput = getSmallComboBox(new Integer[]{1, 5, 10}, 5);
 
         firstPlayerIsComputerInput = getIsComputerCheckbox(
                 firstPlayerDifficultyInput, firstPlayerDelayInput
@@ -147,7 +135,7 @@ public class NewGameSettingsPage extends Page {
         pageButtons.put(Buttons.START, startBtn);
 
         JButton randomGoBtn = ButtonFactory.getStandardButton();
-        randomGoBtn.addActionListener(getRandomToBtnListener());
+        randomGoBtn.addActionListener(getRandomGoBtnListener());
         pageButtons.put(Buttons.RANDOM_GO, randomGoBtn);
 
         JPanel firstPlayerPanel = new JPanel(new GridBagLayout());
@@ -219,19 +207,12 @@ public class NewGameSettingsPage extends Page {
         secondPlayerPanel.add(secondPlayerPanelRow4, gbc);
 
         Box commonSettingsPanel = Box.createVerticalBox();
-
-        JPanel commonSettingsPanelRow1 = new JPanel();
-        commonSettingsPanelRow1.add(gameTime);
-        commonSettingsPanelRow1.add(gameTimeInput);
-        commonSettingsPanelRow1.add(Box.createRigidArea(new Dimension(30, 0)));
-        commonSettingsPanelRow1.add(moveTime);
-        commonSettingsPanelRow1.add(moveTimeInput);
-        commonSettingsPanel.add(commonSettingsPanelRow1);
         JPanel commonSettingsPanelRow2 = new JPanel();
         commonSettingsPanelRow2.add(startWord);
         commonSettingsPanelRow2.add(startWordInput);
-        commonSettingsPanel.add(commonSettingsPanelRow1);
+        commonSettingsPanel.add(Box.createVerticalGlue());
         commonSettingsPanel.add(commonSettingsPanelRow2);
+        commonSettingsPanel.add(Box.createVerticalGlue());
 
         Box bottomButtonsPanel = Box.createHorizontalBox();
 
@@ -296,8 +277,6 @@ public class NewGameSettingsPage extends Page {
     private void setLabelsText() {
         ResourceBundle resourceBundle = currentLanguage.getResourceBundle();
         pageLabels.get(Labels.HEADER).setText(resourceBundle.getString("new_game"));
-        pageLabels.get(Labels.GAME_TIME).setText(resourceBundle.getString("game_time")+": ");
-        pageLabels.get(Labels.MOVE_TIME).setText(resourceBundle.getString("move_time")+": ");
         pageLabels.get(Labels.START_WORD).setText(resourceBundle.getString("start_word")+": ");
 
         pageLabels.get(Labels.FP_NAME).setText(resourceBundle.getString("name")+": ");
@@ -338,6 +317,11 @@ public class NewGameSettingsPage extends Page {
         comboBox.setFont(new Font("Arial", Font.PLAIN, 16));
         comboBox.setPreferredSize(new Dimension(50, 25));
         comboBox.setSelectedItem(defaultValue);
+        return comboBox;
+    }
+    private <T> JComboBox<T> getDelayComboBox(T[] values, T defaultValue) {
+        JComboBox<T> comboBox = getSmallComboBox(values, defaultValue);
+        comboBox.setPreferredSize(new Dimension(100, 25));
         return comboBox;
     }
 
@@ -381,32 +365,20 @@ public class NewGameSettingsPage extends Page {
         if (firstPlayerIsComputerInput.isSelected()) {
             firstPlayer = new ComputerPlayer(
                     fpName,
-                    (Integer) gameTimeInput.getSelectedItem(),
-                    (Integer) moveTimeInput.getSelectedItem(),
                     (ComputerPlayer.Difficulty) firstPlayerDifficultyInput.getSelectedItem(),
                     (Integer) firstPlayerDelayInput.getSelectedItem()
             );
         } else {
-            firstPlayer = new Player (
-                    fpName,
-                    (Integer) gameTimeInput.getSelectedItem(),
-                    (Integer) moveTimeInput.getSelectedItem()
-            );
+            firstPlayer = new Player (fpName);
         }
         if (secondPlayerIsComputerInput.isSelected()) {
             secondPlayer = new ComputerPlayer(
                     spName,
-                    (Integer) gameTimeInput.getSelectedItem(),
-                    (Integer) moveTimeInput.getSelectedItem(),
                     (ComputerPlayer.Difficulty) secondPlayerDifficultyInput.getSelectedItem(),
                     (Integer) secondPlayerDelayInput.getSelectedItem()
             );
         } else {
-            secondPlayer = new Player (
-                    spName,
-                    (Integer) gameTimeInput.getSelectedItem(),
-                    (Integer) moveTimeInput.getSelectedItem()
-            );
+            secondPlayer = new Player (spName);
         }
         playerList.add(firstPlayer);
         playerList.add(secondPlayer);
@@ -468,7 +440,7 @@ public class NewGameSettingsPage extends Page {
         };
     }
 
-    private ActionListener getRandomToBtnListener() {
+    private ActionListener getRandomGoBtnListener() {
         return (ActionEvent e) -> {
             try {
                 Vocabulary vocabulary = getVocabulary();

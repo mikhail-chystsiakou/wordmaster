@@ -1,6 +1,7 @@
 package com.wordmaster.model;
 
 import javax.xml.bind.annotation.*;
+import java.util.List;
 
 @XmlType
 @XmlAccessorType(XmlAccessType.NONE)
@@ -15,6 +16,9 @@ public class Move {
     private char prevCellValue = GameField.EMPTY_CELL_VALUE;
     @XmlElement
     private int[][] resultWord;
+
+    public static final int ALREADY_USED = 1;
+    public static final int INVALID_WORD = 2;
 
     public GameField.Word getResultWord(GameField field) {
         return field.getWord(resultWord);
@@ -48,6 +52,14 @@ public class Move {
         this.cellX = cell.getX();
         this.cellY = cell.getY();
         this.prevCellValue = cell.getValue();
+    }
+
+    public int getResultWordSize() {
+        return resultWord.length;
+    }
+
+    public String getResultWordAsString(GameField field) {
+        return field.getWord(resultWord).fillGap(newCellValue);
     }
 
     @Override

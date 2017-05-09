@@ -1,5 +1,7 @@
 package com.wordmaster.model;
 
+import com.wordmaster.gui.GameFrame;
+import com.wordmaster.gui.page.GamePage;
 import com.wordmaster.model.algorithm.Algorithm;
 import com.wordmaster.model.algorithm.Vocabulary;
 import com.wordmaster.model.exception.ModelException;
@@ -28,7 +30,7 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.NONE)
 public class GameModel {
     private static final Logger logger = LoggerFactory.getLogger(GameModel.class);
-    private List<ModelAware> modelListeners = new LinkedList<>();
+    private List<ModelAware> modelListeners = Collections.synchronizedList(new LinkedList<>());
 
     @XmlElement(name="move")
     @XmlElementWrapper(name="moves")
@@ -47,6 +49,7 @@ public class GameModel {
     private GameField gameField;
     private Algorithm algorithm;
     private ModelScheduler scheduler;
+    private NotificationThread notificationThread;
 
     private ModelOperation currentOperation;
     private enum ModelOperationType {
@@ -63,6 +66,11 @@ public class GameModel {
 
     public GameModel(List<Player> players, Vocabulary vocabulary, String baseWord) {
         playerList.addAll(players);
+        playerList.forEach((Player player) -> {
+            if (player.isComputer()) {
+                addModelListener((ComputerPlayer)player);
+            }
+        });
         try {
             gameField = new GameField(baseWord);
         } catch (IllegalArgumentException e) {
@@ -71,6 +79,8 @@ public class GameModel {
         algorithm = new Algorithm(gameField, vocabulary);
         scheduler = new ModelScheduler(this);
         scheduler.runModelThread();
+        notificationThread = new NotificationThread();
+        notificationThread.start();
     }
 
     void modelThread() {
@@ -86,6 +96,7 @@ public class GameModel {
                 currentOperation = null;
             }
             scheduler.endOperation();
+            emitMoveEvent();
         }
     }
 
@@ -106,16 +117,12 @@ public class GameModel {
         scheduler.startOperation();
     }
 
-    public void generateMove(GameField.Cell cell) throws ModelStateException {
+    public void generateMove() throws ModelStateException {
         if(isReplay) {
             throw new ModelStateException("Model was loaded in replay mode, cannot make move", null);
         }
-
         scheduler.checkOperationInProgressAndLock();
-
         Move move = new Move();
-        move.setCell(cell);
-
         currentOperation = new ModelOperation(ModelOperationType.GENERATE_MOVE);
         currentOperation.setMove(move);
         scheduler.startOperation();
@@ -146,7 +153,7 @@ public class GameModel {
         try {
             JAXBContext context =
                     JAXBContext.newInstance( this.getClass(), Player.class,
-                                                GameField.class, Move.class);
+                            ComputerPlayer.class, GameField.class, Move.class);
             Marshaller m = context.createMarshaller();
             m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE );
             m.marshal(this, file);
@@ -160,17 +167,26 @@ public class GameModel {
     public static GameModel load(File file, Vocabulary vocabulary, boolean isReplay) {
         try {
             JAXBContext context = JAXBContext.newInstance( GameModel.class, Player.class,
-                                                            GameField.class, Move.class);
+                    ComputerPlayer.class, GameField.class, Move.class);
             Unmarshaller um = context.createUnmarshaller();
             GameModel loadedModel = (GameModel)um.unmarshal(file);
             loadedModel.algorithm = new Algorithm(loadedModel.gameField, vocabulary);
             loadedModel.scheduler = new ModelScheduler(loadedModel);
-            loadedModel.scheduler.runModelThread();
+
             loadedModel.isReplay = isReplay;
             if (isReplay) {
                 loadedModel.currentMove = 0;    // implicit for the replay case
                 loadedModel.playerList.forEach(Player::clearWords);
+                loadedModel.gameField.clear();
             }
+            loadedModel.playerList.forEach((Player player) ->  {
+                if (player.isComputer()) {
+                    loadedModel.addModelListener((ComputerPlayer)player);
+                }
+            });
+            loadedModel.notificationThread = new NotificationThread();
+            loadedModel.notificationThread.start();
+            loadedModel.scheduler.runModelThread();
             return loadedModel;
         } catch (JAXBException e) {
             logger.warn("Cannot marshal model to file {}", file.getName(), e);
@@ -186,11 +202,21 @@ public class GameModel {
         scheduler.awake();
     }
 
+    public void startGame() {
+        if (playerList.get(currentPlayer).isComputer()) {
+            notificationThread.addTask(() -> {
+                ((ComputerPlayer)playerList.get(currentPlayer)).onMove(this);
+            });
+        } else {
+            analyzePosition();
+        }
+    }
+
     public void surrender() {
         if (playerList.size() == 2) {
             winners.add(playerList.get(getPreviousPlayer()));
-            scheduler.raiseDeath();
             emitFinishEvent();
+            destroy();
         } else {
             // hook for the later development
         }
@@ -205,7 +231,9 @@ public class GameModel {
     }
 
     public void removeModelListener(ModelAware listener) {
-        modelListeners.remove(listener);
+        notificationThread.addTask(() -> {
+            modelListeners.remove(listener);
+        });
     }
 
     private int getPreviousPlayer() {
@@ -246,6 +274,7 @@ public class GameModel {
 
     public void destroy() {
         // send kill message to model
+        notificationThread.raiseDeath();
         scheduler.raiseDeath();
     }
 
@@ -261,22 +290,53 @@ public class GameModel {
         }
     }
 
+    private void analyzePosition() {
+        List<String> allPlayerWords = new LinkedList<>();
+        playerList.forEach((Player p) -> {
+            allPlayerWords.addAll(p.getWords());
+        });
+        allPlayerWords.add(gameField.getStartWord());
+
+        algorithm.predictMove((Move m) -> {
+            if (m == null) {
+                // game ends;
+                detectWinners();
+                emitFinishEvent();
+                destroy();
+            } else {
+                suggestion = m;
+                logger.debug("There is at least one move: {}",
+                        m.getResultWordAsString(gameField));
+            }
+        }, allPlayerWords);
+    }
+
     private void emitMoveEvent() {
-        new Thread(()-> {
-            modelListeners.forEach(ModelAware::onMove);
-        }).start();
+        notificationThread.addTask(() -> {
+            pause();
+            modelListeners.forEach((ModelAware ma) -> {
+                ma.onMove(this);
+            });
+            resume();
+        });
     }
 
     private void emitFinishEvent() {
-        new Thread(()-> {
-            modelListeners.forEach(ModelAware::onFinish);
-        }).start();
+        notificationThread.addTask(() -> {
+            pause();
+            modelListeners.forEach((ModelAware ma) -> {
+                ma.onFinish(this);
+            });
+            resume();
+        });
     }
 
-    private void emitInvalidMoveEvent() {
-        new Thread(()-> {
-            modelListeners.forEach(ModelAware::onInvalidMove);
-        }).start();
+    private void emitInvalidMoveEvent(int type) {
+        notificationThread.addTask(() -> {
+            pause();
+            modelListeners.forEach((ModelAware ma) -> ma.onInvalidMove(this, type));
+            resume();
+        });
     }
 
     private class ModelOperation {
@@ -323,7 +383,17 @@ public class GameModel {
 
         void makeMove() {
             if (!algorithm.validateMove(move)) {
-                emitInvalidMoveEvent();
+                emitInvalidMoveEvent(Move.INVALID_WORD);
+                return;
+            }
+            boolean alreadyExists = false;
+            String moveWord = move.getResultWordAsString(gameField);
+            for (Player player : playerList) {
+                if (player.getWords().contains(moveWord)) alreadyExists = true;
+            }
+            if (gameField.getStartWord().equals(moveWord)) alreadyExists = true;
+            if (alreadyExists) {
+                emitInvalidMoveEvent(Move.ALREADY_USED);
                 return;
             }
             scheduler.checkAndSleep();
@@ -331,11 +401,19 @@ public class GameModel {
         }
 
         void generateMove() {
-            move = algorithm.generateMove();
+            List<String> allPlayerWords = new LinkedList<>();
+            playerList.forEach((Player p) -> {
+                allPlayerWords.addAll(p.getWords());
+            });
+            allPlayerWords.add(gameField.getStartWord());
+            List<Move> generatedMoves = algorithm.generateWithout(allPlayerWords);
+            if (playerList.get(currentPlayer).isComputer()) {
+                move = ((ComputerPlayer)playerList.get(currentPlayer)).selectMove(generatedMoves);
+            }
             if (move == null) {
                 detectWinners();
-                scheduler.raiseDeath();
                 emitFinishEvent();
+                destroy();
                 return;
             }
             scheduler.checkAndSleep();
@@ -363,21 +441,10 @@ public class GameModel {
             } else {
                 currentPlayer++;
             }
-            suggestion = null;
-            emitMoveEvent();
 
+            suggestion = null;
             if (!playerList.get(currentPlayer).isComputer()) {
-                // if human, run analyze in background
-                algorithm.predictMove((Move m) -> {
-                    if (m == null) {
-                        // game ends;
-                        detectWinners();
-                        scheduler.raiseDeath();
-                        emitFinishEvent();
-                    } else {
-                        suggestion = m;
-                    }
-                });
+                analyzePosition();
             }
         }
 
@@ -397,12 +464,10 @@ public class GameModel {
                 currentMove--;
                 currentPlayer = getPreviousPlayer();
             }
-            emitMoveEvent();
         }
 
         private void redo() {
             scheduler.checkAndSleep();
-            int j = 0;
             if (currentMove + undoRedoTimes - 1 < moves.size()) {
                 for (int i = 0; i < undoRedoTimes; i++) {
                     Move moveToRedo = moves.get(currentMove);
@@ -424,7 +489,6 @@ public class GameModel {
                     currentMove++;
                 }
             }
-            emitMoveEvent();
         }
     }
 }

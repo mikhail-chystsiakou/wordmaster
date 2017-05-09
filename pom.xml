@@ -16,7 +16,12 @@
             <!--<artifactId>weblaf-ui</artifactId>-->
             <!--<version>1.2.8</version>-->
         <!--</dependency>-->
-
+        <dependency>
+            <groupId>darkula</groupId>
+            <artifactId>com.jetbrains</artifactId>
+            <version>1.0</version>
+            <systemPath>${project.basedir}/src/main/resources/darcula.jar</systemPath>
+        </dependency>
 
         <dependency>
             <groupId>ch.qos.logback</groupId>

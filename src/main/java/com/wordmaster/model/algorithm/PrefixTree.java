@@ -21,8 +21,8 @@ public class PrefixTree {
                 nextWord = bf.readLine();
             }
         } catch (IOException e) {
-            logger.error("Cannot load vocabulary", e);
-            System.exit(1);
+            logger.error("Cannot load tree", e);
+            throw e;
         }
     }
 
@@ -30,7 +30,7 @@ public class PrefixTree {
         putNode(word, 0);
     }
 
-    public PrefixTree goTo(String wordPart) {
+    PrefixTree goTo(String wordPart) {
         if (wordPart.length() > 0) {
             if (!subNodes.containsKey(wordPart.charAt(0))) return null;
             return subNodes.get(wordPart.charAt(0)).goTo(wordPart.substring(1));
@@ -39,7 +39,7 @@ public class PrefixTree {
         }
     }
 
-    public PrefixTree goTo(char c) {
+    PrefixTree goTo(char c) {
         return subNodes.get(c);
     }
 
@@ -75,5 +75,9 @@ public class PrefixTree {
 
     public String getValue() {
         return value;
+    }
+
+    Set<Character> getSubNodesKeys() {
+        return subNodes.keySet();
     }
 }

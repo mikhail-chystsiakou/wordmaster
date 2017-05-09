@@ -56,7 +56,6 @@ public enum Language {
     public boolean validateWord(String s) {
         for (char c : s.toCharArray()) {
             if (getAlphabet().indexOf(c) == -1) {
-                System.out.println(c);
                 return false;
             }
         }

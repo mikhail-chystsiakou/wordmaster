@@ -3,6 +3,7 @@ package com.wordmaster.model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlList;
 import javax.xml.bind.annotation.XmlType;
@@ -18,6 +19,8 @@ public class GameField {
     public final static char EMPTY_CELL_VALUE = ' ';
     @XmlElement
     private char[][] field = new char[FIELD_HEIGHT][FIELD_WIDTH];
+    @XmlAttribute
+    private String startWord;
 
     // for the jaxb
     public GameField() {
@@ -29,14 +32,30 @@ public class GameField {
             logger.error("Invalid size of GameField base word {}", word);
             throw new IllegalArgumentException("Illegal word size");
         }
-        int wordStartPosition = (FIELD_WIDTH-word.length())/2;
+        this.startWord = word;
+        clear();
+    }
+
+    public List<Cell> getAvailableCells() {
+        List<Cell> availableCells = new LinkedList<>();
+        for (int y = 0; y < FIELD_HEIGHT; y++) {
+            for (int x = 0; x < FIELD_HEIGHT; x++) {
+                Cell cell = getCell(x, y);
+                if (cell.isEmpty() && !cell.isStandalone()) availableCells.add(cell);
+            }
+        }
+        return availableCells;
+    }
+
+    void clear() {
+        int wordStartPosition = (FIELD_WIDTH-startWord.length())/2;
         for (int y = 0; y < FIELD_HEIGHT; y++) {
             for (int x = 0; x < FIELD_HEIGHT; x++) {
                 field[y][x] = EMPTY_CELL_VALUE;
             }
         }
-        for (int i = 0; i < word.length(); i++) {
-            field[FIELD_HEIGHT/2][wordStartPosition+i] = word.charAt(i);
+        for (int i = 0; i < startWord.length(); i++) {
+            field[FIELD_HEIGHT/2][wordStartPosition+i] = startWord.charAt(i);
         }
     }
 
@@ -52,6 +71,10 @@ public class GameField {
         return word;
     }
 
+    public String getStartWord() {
+        return startWord;
+    }
+
     public class Cell {
         int x;
         int y;
@@ -59,6 +82,10 @@ public class GameField {
         private Cell(int x, int y) {
             this.x = x;
             this.y = y;
+        }
+
+        public boolean isEmpty() {
+            return getValue() == EMPTY_CELL_VALUE;
         }
 
         public char getValue() {
@@ -116,6 +143,15 @@ public class GameField {
             } else return null;
         }
 
+        public List<Cell> getNearCells() {
+            LinkedList<Cell> nearCells = new LinkedList<>();
+            if (getLeft() != null) nearCells.add(getLeft());
+            if (getRight() != null) nearCells.add(getRight());
+            if (getTop() != null) nearCells.add(getTop());
+            if (getBottom() != null) nearCells.add(getBottom());
+            return nearCells;
+        }
+
         public boolean isStandalone() {
             Cell left = getLeft();
             Cell right = getRight();
@@ -171,6 +207,10 @@ public class GameField {
             return null;
         }
 
+        public Cell getLast() {
+            return word.get(word.size()-1);
+        }
+
         public Word copy() {
             Word clone = new Word();
             clone.word = Collections.synchronizedList(new LinkedList<>(word));
@@ -195,6 +235,10 @@ public class GameField {
                 arr[i] = word.get(i).toArray();
             }
             return arr;
+        }
+
+        public void reverse() {
+            Collections.reverse(word);
         }
 
         @Override

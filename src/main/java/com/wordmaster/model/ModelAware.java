@@ -1,9 +1,7 @@
 package com.wordmaster.model;
 
-import com.wordmaster.model.exception.ModelException;
-
 public interface ModelAware {
-    void onMove();
-    void onFinish();
-    void onInvalidMove();
+    void onMove(GameModel model);
+    void onFinish(GameModel model);
+    void onInvalidMove(GameModel model, int type);
 }

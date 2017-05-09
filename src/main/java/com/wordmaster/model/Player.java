@@ -27,7 +27,7 @@ public class Player {
 
     }
 
-    public Player(String name, int gameTime, int moveTime) {
+    public Player(String name) {
         this.name = name;
     }
 

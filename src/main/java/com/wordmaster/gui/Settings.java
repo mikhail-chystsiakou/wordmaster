@@ -1,5 +1,6 @@
 package com.wordmaster.gui;
 
+import com.bulenkov.darcula.DarculaLaf;
 import com.wordmaster.gui.i18n.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,12 +44,12 @@ public class Settings implements Cloneable {
                 return UIManager.getSystemLookAndFeelClassName();
             }
         },
-        WEBLAF {
+        DARKULA {
             public String toString() {
-                return "WebLAf";
+                return "Darcula";
             }
             public String getPackageString() {
-                return "com.alee.laf.WebLookAndFeel";
+                return DarculaLaf.class.getCanonicalName();
             }
         };
         public abstract String getPackageString();

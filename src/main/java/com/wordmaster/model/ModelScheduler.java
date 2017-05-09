@@ -13,7 +13,7 @@ public class ModelScheduler {
     // Логика работы: если модель переведена с состояние suspend, то никакие
     // изменения не произойдут до resume. Это значит, что возможно продолжение
     // вычислений в потоке, однако не обновление модели
-    private boolean threadSuspendFlag = false;
+    private int suspendSemaphore = 0;
     private boolean threadDeathFlag = false;
     private boolean moveInProgressFlag = false;
 
@@ -29,8 +29,9 @@ public class ModelScheduler {
         modelThread.start();
     }
     synchronized void checkOperationInProgressAndLock() throws ModelStateException {
+        if (threadDeathFlag) return;
         if (moveInProgressFlag) {
-            logger.error("Cannot make move cause another move is in progress");
+            logger.trace("Cannot make move cause another move is in progress");
             throw new ModelStateException("Another move in progress", null);
         } else {
             moveInProgressFlag = true;
@@ -54,14 +55,14 @@ public class ModelScheduler {
     }
 
     synchronized void raiseSleep() {
-        threadSuspendFlag = true;
+        suspendSemaphore--;
     }
     synchronized void awake() {
-        threadSuspendFlag = false;
+        suspendSemaphore++;
         notify();
     }
     synchronized void checkAndSleep() {
-        while(threadSuspendFlag) {
+        while(suspendSemaphore < 0) {
             try {
                 wait();
             } catch (InterruptedException e) {
@@ -71,7 +72,6 @@ public class ModelScheduler {
     }
 
     synchronized void raiseDeath() {
-        logger.error("raising model death");
         threadDeathFlag = true;
         // if no move in progress
         moveInProgressFlag = true;

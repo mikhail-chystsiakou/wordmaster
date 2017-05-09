@@ -34,7 +34,6 @@ public class WordmasterUtils {
                 resourceBundle.getString("save_replay_question"),
                 resourceBundle.getString("save_replay_title"),
                 JOptionPane.YES_NO_OPTION);
-        System.out.println(n);
         return n == 0;
     }
 }
