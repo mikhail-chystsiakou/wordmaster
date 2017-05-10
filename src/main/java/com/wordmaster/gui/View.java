@@ -1,5 +1,6 @@
 package com.wordmaster.gui;
 
+import com.wordmaster.gui.audio.AudioPlayer;
 import com.wordmaster.gui.custom.WordmasterUtils;
 import com.wordmaster.gui.page.*;
 import com.wordmaster.model.GameField;
@@ -20,6 +21,7 @@ public class View {
     private final Settings settings = new Settings();
     private Map<Pages, Page> pages = new HashMap<>();
     private Page currentPage;
+    private AudioPlayer player = new AudioPlayer();
 
     private boolean isInitialized = false;
 
@@ -61,6 +63,7 @@ public class View {
             }
             showPage(Pages.STARTUP);
             frame.setResizable(false);
+            player.startBackgroundMusic();
             frame.setVisible(true);
         });
     }
@@ -108,12 +111,14 @@ public class View {
             });
         }
         Vocabulary.loadVocabulary(settings.getLanguage());
+        player.setBackgroundMusicVolume(settings.getMusicVolume());
+        player.setSoundsVolume(settings.getSoundVolume());
     }
     public Settings getSettings() {
         return settings;
     }
     public JFrame getFrame() {return frame;}
-
+    public AudioPlayer getPlayer() {return player;}
     public Page getPage(Pages page) {
         return pages.get(page);
     }

@@ -1,5 +1,6 @@
 package com.wordmaster.gui.page;
 
+import com.wordmaster.gui.audio.AudioPlayer;
 import com.wordmaster.gui.custom.ButtonFactory;
 import com.wordmaster.gui.View;
 import com.wordmaster.gui.custom.WordmasterUtils;
@@ -45,14 +46,14 @@ public class StartupPage extends Page {
         page.add(newGameBtn);
 
         page.add(Box.createVerticalGlue());
-        JButton loadGameBtn = ButtonFactory.getStandardButton();
+        JButton loadGameBtn = ButtonFactory.getStandardButton(parentView);
         loadGameBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         loadGameBtn.addActionListener(getLoadGameActionListener());
         pageButtons.put(Buttons.LOAD_GAME, loadGameBtn);
         page.add(loadGameBtn);
 
         page.add(Box.createVerticalGlue());
-        JButton analyzeReplayBtn = ButtonFactory.getStandardButton();
+        JButton analyzeReplayBtn = ButtonFactory.getStandardButton(parentView);
         analyzeReplayBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         analyzeReplayBtn.addActionListener(getAnalyzeReplayActionListener());
         pageButtons.put(Buttons.ANALYZE_REPLAY, analyzeReplayBtn);
@@ -65,12 +66,12 @@ public class StartupPage extends Page {
         page.add(settingsBtn);
 
         page.add(Box.createVerticalGlue());
-        JButton exitBtn = ButtonFactory.getStandardButton();
+        JButton exitBtn = ButtonFactory.getStandardButton(parentView);
         exitBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         exitBtn.addActionListener(
                 new MenuItemListener(parentView));
         exitBtn.addActionListener(
-                new SoundButtonListener(parentView, SoundButtonListener.SoundType.MENU));
+                new SoundButtonListener(parentView, AudioPlayer.SoundType.STANDARD_BUTTON));
         pageButtons.put(Buttons.EXIT, exitBtn);
         page.add(exitBtn);
 

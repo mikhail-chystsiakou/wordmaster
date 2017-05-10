@@ -138,23 +138,23 @@ public class GamePage extends Page implements ModelAware {
         backBtn.addActionListener(getBackBtnListener());
         pageButtons.put(Buttons.BACK, backBtn);
 
-        JButton undoBtn = ButtonFactory.getStandardButton();
+        JButton undoBtn = ButtonFactory.getStandardButton(parentView);
         undoBtn.addActionListener(getUndoBtnListener());
         pageButtons.put(Buttons.UNDO, undoBtn);
 
-        JButton applyBtn = ButtonFactory.getStandardButton();
+        JButton applyBtn = ButtonFactory.getStandardButton(parentView);
         applyBtn.addActionListener(getApplyBtnListener());
         pageButtons.put(Buttons.APPLY, applyBtn);
 
-        JButton redoBtn = ButtonFactory.getStandardButton();
+        JButton redoBtn = ButtonFactory.getStandardButton(parentView);
         redoBtn.addActionListener(getRedoBtnListener());
         pageButtons.put(Buttons.REDO, redoBtn);
 
-        JButton surrenderBtn = ButtonFactory.getStandardButton();
+        JButton surrenderBtn = ButtonFactory.getStandardButton(parentView);
         surrenderBtn.addActionListener(getSurrenderBtnListener());
         pageButtons.put(Buttons.SURRENDER, surrenderBtn);
 
-        JButton saveBtn = ButtonFactory.getStandardButton();
+        JButton saveBtn = ButtonFactory.getStandardButton(parentView);
         saveBtn.addActionListener(getSaveBtnListener());
         pageButtons.put(Buttons.SAVE, saveBtn);
 

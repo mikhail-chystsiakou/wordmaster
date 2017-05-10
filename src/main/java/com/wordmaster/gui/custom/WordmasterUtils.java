@@ -1,10 +1,10 @@
 package com.wordmaster.gui.custom;
 
 import com.wordmaster.gui.i18n.Language;
-import com.wordmaster.gui.page.GamePage;
 import com.wordmaster.model.Player;
 
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import java.util.List;
 import java.util.ResourceBundle;
 

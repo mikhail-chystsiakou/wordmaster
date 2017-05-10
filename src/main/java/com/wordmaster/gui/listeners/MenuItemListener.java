@@ -1,27 +1,25 @@
 package com.wordmaster.gui.listeners;
 
 import com.wordmaster.gui.View;
+import com.wordmaster.gui.audio.AudioPlayer;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class MenuItemListener extends SoundButtonListener {
+public class MenuItemListener implements ActionListener {
     private View.Pages pageToShow;
     private View view;
 
     public MenuItemListener (View view, View.Pages pageToShow) {
-        super(view, SoundType.MENU);
         this.pageToShow = pageToShow;
         this.view = view;
     }
     public MenuItemListener(View view) {
-        super(view, SoundType.MENU);
         this.view = view;
     }
 
     @Override
     public void actionPerformed(ActionEvent event) {
-        super.actionPerformed(event);
         if (pageToShow == null) {
             view.destroy();
         } else {

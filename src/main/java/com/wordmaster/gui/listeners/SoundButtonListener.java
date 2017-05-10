@@ -1,6 +1,7 @@
 package com.wordmaster.gui.listeners;
 
 import com.wordmaster.gui.View;
+import com.wordmaster.gui.audio.AudioPlayer;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,19 +13,18 @@ import java.awt.event.ActionListener;
  * @version 1.0
  */
 public class SoundButtonListener implements ActionListener {
-    private SoundType soundType;
+    private AudioPlayer.SoundType soundType;
     private View view;
 
-    public enum SoundType {
-        MENU, TAKE_LETTER, PLACE_LETTER
-    }
 
-    public SoundButtonListener (View view, SoundType soundType) {
+
+    public SoundButtonListener (View view, AudioPlayer.SoundType soundType) {
         this.view = view;
         this.soundType = soundType;
     }
 
     public void actionPerformed(ActionEvent event) {
+        view.getPlayer().playSound(soundType);
         // Get sound settings from view.getSettings()
         // Produce sound effect
     }

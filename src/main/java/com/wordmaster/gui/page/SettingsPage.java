@@ -1,6 +1,7 @@
 package com.wordmaster.gui.page;
 
 import com.wordmaster.gui.*;
+import com.wordmaster.gui.audio.AudioPlayer;
 import com.wordmaster.gui.custom.ButtonFactory;
 import com.wordmaster.gui.custom.LabelFactory;
 import com.wordmaster.gui.custom.WordmasterUtils;
@@ -90,7 +91,7 @@ public class SettingsPage extends Page {
         );
         soundsVolume.setPreferredSize(new Dimension(100, 40));
 
-        JButton saveBtn = ButtonFactory.getStandardButton();
+        JButton saveBtn = ButtonFactory.getStandardButton(parentView);
         saveBtn.addActionListener((ActionEvent e) -> {
             parentView.applySettings(settings);   // sync call
             new MenuItemListener(parentView, View.Pages.SETTINGS).actionPerformed(e);
@@ -100,19 +101,19 @@ public class SettingsPage extends Page {
             settings = parentView.getSettings();
         });
         saveBtn.addActionListener(
-                new SoundButtonListener(parentView, SoundButtonListener.SoundType.MENU)
+                new SoundButtonListener(parentView, AudioPlayer.SoundType.STANDARD_BUTTON)
         );
 
         pageButtons.put(Buttons.SAVE, saveBtn);
 
-        JButton applyBtn = ButtonFactory.getStandardButton();
+        JButton applyBtn = ButtonFactory.getStandardButton(parentView);
         applyBtn.addActionListener((ActionEvent e) -> {
             parentView.applySettings(settings);
             new MenuItemListener(parentView, View.Pages.SETTINGS).actionPerformed(e);
             settings = parentView.getSettings();
         });
         applyBtn.addActionListener(
-                new SoundButtonListener(parentView, SoundButtonListener.SoundType.MENU)
+                new SoundButtonListener(parentView, AudioPlayer.SoundType.STANDARD_BUTTON)
         );
         pageButtons.put(Buttons.APPLY, applyBtn);
 

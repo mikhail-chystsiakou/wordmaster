@@ -130,11 +130,11 @@ public class NewGameSettingsPage extends Page {
         JButton backBtn = ButtonFactory.getMenuItemButton(parentView, View.Pages.STARTUP);
         pageButtons.put(Buttons.BACK, backBtn);
 
-        JButton startBtn = ButtonFactory.getStandardButton();
+        JButton startBtn = ButtonFactory.getStandardButton(parentView);
         startBtn.addActionListener(getNewGameBtnListener());
         pageButtons.put(Buttons.START, startBtn);
 
-        JButton randomGoBtn = ButtonFactory.getStandardButton();
+        JButton randomGoBtn = ButtonFactory.getStandardButton(parentView);
         randomGoBtn.addActionListener(getRandomGoBtnListener());
         pageButtons.put(Buttons.RANDOM_GO, randomGoBtn);
 

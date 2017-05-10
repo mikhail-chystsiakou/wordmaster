@@ -2,8 +2,9 @@ package com.wordmaster.gui.custom;
 
 import com.wordmaster.model.GameField;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import java.awt.Font;
 
 public class LabelFactory {
     public static JLabel getStandardLabel() {
