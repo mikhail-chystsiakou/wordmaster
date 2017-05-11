@@ -15,11 +15,18 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+/**
+ * Represents the page with settings controls
+ *
+ * @version 1.0
+ * @author Mike
+ */
 public class SettingsPage extends Page {
     private static Logger logger = LoggerFactory.getLogger(StartupPage.class);
     private Map<Labels, JLabel> pageLabels = new HashMap<>();
@@ -39,6 +46,7 @@ public class SettingsPage extends Page {
     public SettingsPage(View parentView) {
         super(parentView);
     }
+
     public void initialize() {
         page = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -92,26 +100,14 @@ public class SettingsPage extends Page {
         soundsVolume.setPreferredSize(new Dimension(100, 40));
 
         JButton saveBtn = ButtonFactory.getStandardButton(parentView);
-        saveBtn.addActionListener((ActionEvent e) -> {
-            parentView.applySettings(settings);   // sync call
-            new MenuItemListener(parentView, View.Pages.SETTINGS).actionPerformed(e);
-            Settings.saveSettings(Settings.DEFAULT_SETTINGS_FILE, parentView.getSettings(), () ->
-                    WordmasterUtils.showErrorAlert(parentView.getFrame(), "Cannot save settings to file")
-            );    // async call
-            settings = parentView.getSettings();
-        });
+        saveBtn.addActionListener(getSaveBtnListener());
         saveBtn.addActionListener(
                 new SoundButtonListener(parentView, AudioPlayer.SoundType.STANDARD_BUTTON)
         );
-
         pageButtons.put(Buttons.SAVE, saveBtn);
 
         JButton applyBtn = ButtonFactory.getStandardButton(parentView);
-        applyBtn.addActionListener((ActionEvent e) -> {
-            parentView.applySettings(settings);
-            new MenuItemListener(parentView, View.Pages.SETTINGS).actionPerformed(e);
-            settings = parentView.getSettings();
-        });
+        applyBtn.addActionListener(getApplyBtnListener());
         applyBtn.addActionListener(
                 new SoundButtonListener(parentView, AudioPlayer.SoundType.STANDARD_BUTTON)
         );
@@ -222,6 +218,9 @@ public class SettingsPage extends Page {
         lafPicker.setSelectedItem(settings.getLAF());
     }
 
+    /**
+     * Helper method to update text on buttons
+     */
     protected void setButtonsText() {
         ResourceBundle resourceBundle = currentLanguage.getResourceBundle();
         pageButtons.get(Buttons.APPLY).setText(resourceBundle.getString("apply"));
@@ -229,6 +228,9 @@ public class SettingsPage extends Page {
         pageButtons.get(Buttons.SAVE).setText(resourceBundle.getString("save"));
     }
 
+    /**
+     * Helper method to update text on labels
+     */
     protected void setLabelsText() {
         ResourceBundle resourceBundle = currentLanguage.getResourceBundle();
         pageLabels.get(Labels.HEADER).setText(resourceBundle.getString("settings"));
@@ -236,5 +238,39 @@ public class SettingsPage extends Page {
         pageLabels.get(Labels.LAF).setText("LAF: ");
         pageLabels.get(Labels.MUSIC).setText(resourceBundle.getString("music")+": ");
         pageLabels.get(Labels.SOUNDS).setText(resourceBundle.getString("sounds")+": ");
+    }
+
+    /**
+     * Applies and saves settings according to the controls state.
+     * Rerenders page after changes
+     *
+     * @return listener to perform apply operation
+     */
+    private ActionListener getSaveBtnListener() {
+        return (ActionEvent e) -> {
+            parentView.applySettings(settings);   // sync call
+            new MenuItemListener(parentView, View.Pages.SETTINGS).actionPerformed(e);
+            Settings.saveSettings(Settings.DEFAULT_SETTINGS_FILE, parentView.getSettings(), () ->
+                    WordmasterUtils.showErrorAlert(parentView.getFrame(),
+                            "e_saving_error", parentView.getSettings().getLanguage())
+            );    // async call
+            settings = parentView.getSettings();
+            updateLanguage();
+        };
+    }
+
+    /**
+     * Applies settings according to the controls state.
+     * Rerenders page after changes
+     *
+     * @return listener to perform apply operation
+     */
+    private ActionListener getApplyBtnListener() {
+        return (ActionEvent e) -> {
+            parentView.applySettings(settings);
+            new MenuItemListener(parentView, View.Pages.SETTINGS).actionPerformed(e);
+            settings = parentView.getSettings();
+            updateLanguage();
+        };
     }
 }

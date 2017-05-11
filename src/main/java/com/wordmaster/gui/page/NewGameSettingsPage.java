@@ -29,6 +29,12 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+/**
+ * Represent the page with new game settings
+ *
+ * @version 1.0
+ * @author Mike
+ */
 public class NewGameSettingsPage extends Page {
     private static final Logger logger = LoggerFactory.getLogger(NewGameSettingsPage.class);
     private Map<Labels, JLabel> pageLabels = new HashMap<>();
@@ -125,7 +131,7 @@ public class NewGameSettingsPage extends Page {
         );
 
 
-        startWordInput = getLimitedTextField(5);
+        startWordInput = getLimitedTextField(GameField.MAX_START_WORD_SIZE);
 
         JButton backBtn = ButtonFactory.getMenuItemButton(parentView, View.Pages.STARTUP);
         pageButtons.put(Buttons.BACK, backBtn);
@@ -266,6 +272,9 @@ public class NewGameSettingsPage extends Page {
         setTitledBordersText();
     }
 
+    /**
+     * Helper method to update text on buttons
+     */
     private void setButtonsText() {
         ResourceBundle resourceBundle = currentLanguage.getResourceBundle();
 
@@ -274,6 +283,9 @@ public class NewGameSettingsPage extends Page {
         pageButtons.get(Buttons.RANDOM_GO).setText(resourceBundle.getString("random_go"));
     }
 
+    /**
+     * Helper method to update text on labels
+     */
     private void setLabelsText() {
         ResourceBundle resourceBundle = currentLanguage.getResourceBundle();
         pageLabels.get(Labels.HEADER).setText(resourceBundle.getString("new_game"));
@@ -290,12 +302,16 @@ public class NewGameSettingsPage extends Page {
         pageLabels.get(Labels.SP_DELAY).setText(resourceBundle.getString("delay")+": ");
     }
 
+    /**
+     * Helper method to update text on titled borders
+     */
     private void setTitledBordersText() {
         ResourceBundle resourceBundle = currentLanguage.getResourceBundle();
         pageTitledBorders.get(TitledBorders.FP_BORDER).setTitle(resourceBundle.getString("player")+" 1");
         pageTitledBorders.get(TitledBorders.SP_BORDER).setTitle(resourceBundle.getString("player")+" 2");
     }
 
+    // helper method to construct gui components
     private JCheckBox getIsComputerCheckbox(JComboBox<?> difficultyInput, JComboBox<?> delayInput) {
         JCheckBox isComputerInput = new JCheckBox();
         isComputerInput.addActionListener((ActionEvent e) -> {
@@ -311,7 +327,6 @@ public class NewGameSettingsPage extends Page {
         isComputerInput.setSelected(false);
         return isComputerInput;
     }
-
     private <T> JComboBox<T> getSmallComboBox(T[] values, T defaultValue) {
         JComboBox<T> comboBox = new JComboBox<>(values);
         comboBox.setFont(new Font("Arial", Font.PLAIN, 16));
@@ -324,13 +339,11 @@ public class NewGameSettingsPage extends Page {
         comboBox.setPreferredSize(new Dimension(100, 25));
         return comboBox;
     }
-
     private <T> JComboBox<T> getWideComboBox(T[] values, T defaultValue) {
         JComboBox<T> comboBox = getSmallComboBox(values, defaultValue);
         comboBox.setPreferredSize(new Dimension(100, 25));
         return comboBox;
     }
-
     private JTextField getLimitedTextField(int size) {
         JTextField textField = new JTextField();
         Font textFieldFont = new Font("Arial", Font.PLAIN, 16);
@@ -340,24 +353,34 @@ public class NewGameSettingsPage extends Page {
         return textField;
     }
 
+    /**
+     * Parses players from the gui controls
+     *
+     * @return list of players on success validation, null on error
+     */
     private List<Player> validateAndGetPlayers() {
-        // validation
+
         String fpName = firstPlayerNameInput.getText();
         String spName = secondPlayerNameInput.getText();
 
+        // validation
         if (fpName.length() < Player.MIN_NAME_LENGTH ) {
-            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Invalid first player name");
+            WordmasterUtils.showErrorAlert(parentView.getFrame(),
+                    "e_fp_name", parentView.getSettings().getLanguage());
             return null;
         }
         if (spName.length() < Player.MIN_NAME_LENGTH) {
-            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Invalid second player name");
+            WordmasterUtils.showErrorAlert(parentView.getFrame(),
+                    "e_sp_name", parentView.getSettings().getLanguage());
             return null;
         }
         if (fpName.equals(spName)) {
-            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Equal player names");
+            WordmasterUtils.showErrorAlert(parentView.getFrame(),
+                    "e_players_equal_names", parentView.getSettings().getLanguage());
             return null;
         }
 
+        // parsing
         List<Player> playerList = new LinkedList<>();
         Player firstPlayer;
         Player secondPlayer;
@@ -385,33 +408,56 @@ public class NewGameSettingsPage extends Page {
         return playerList;
     }
 
+    /**
+     * Validates the start word by language and field size
+     * NOTE: doesn't validate the word semantics
+     *
+     * @return word on success validation, null on error
+     */
     private String validateAndGetStartWord() {
         // validation
         Language language = parentView.getSettings().getLanguage();
         String startWord = startWordInput.getText();
 
-        if (startWord.length() < GameField.MIN_START_WORD_SIZE || !language.validateWord(startWord)) {
-            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Illegal start word");
+        if (startWord.length() < GameField.MIN_START_WORD_SIZE || !language.validateWordLetters(startWord)) {
+            WordmasterUtils.showErrorAlert(parentView.getFrame(),
+                    "e_invalid_start_word", parentView.getSettings().getLanguage());
             return null;
         }
         return startWord;
     }
+
+    /**
+     * Helper method to get the vocabulary from the continious future task.
+     * If task is not finished yet, shows warning alert
+     * @return vocabulary object on success, null on error
+     */
     private Vocabulary getVocabulary() {
         Language language = parentView.getSettings().getLanguage();
         Future<Vocabulary> vocabulary = Vocabulary.getVocabulary(language);
         if (!vocabulary.isDone()) {
-            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Wait please, vocabulary is still loading");
+            WordmasterUtils.showErrorAlert(parentView.getFrame(),
+                    "vocabulary_loading", parentView.getSettings().getLanguage());
             return null;
         }
         try {
             return vocabulary.get();
         } catch (ExecutionException | InterruptedException exception) {
             logger.error("Exception during loading vocabulary", exception);
-            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Error during loading vocabulary");
+            WordmasterUtils.showErrorAlert(parentView.getFrame(),
+                    "e_vocabulary_loading", parentView.getSettings().getLanguage());
             return null;
         }
     }
 
+    /**
+     * Creates the game model, sets it to the game page and switches the view to
+     * the game page
+     *
+     * @param playerList the list of players
+     * @param vocabulary the game vocabulary
+     * @param startWord the start word
+     */
     private void startGame(List<Player> playerList, Vocabulary vocabulary, String startWord) {
         try {
             GameModel newGameModel = new GameModel(playerList, vocabulary, startWord);
@@ -419,12 +465,18 @@ public class NewGameSettingsPage extends Page {
             gamePage.setModel(newGameModel);
         } catch (ModelInitializeException e) {
             logger.error("Illegal game initializing", e);
-            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Illegal game initializing");
+            WordmasterUtils.showErrorAlert(parentView.getFrame(),
+                    "e_game_initializing", parentView.getSettings().getLanguage());
             return;
         }
         new MenuItemListener(parentView, View.Pages.GAME).actionPerformed(null);
     }
 
+    /**
+     * Retrieves necessary parameters from helper methods and calls startGame
+     *
+     * @return listener to start game
+     */
     private ActionListener getNewGameBtnListener() {
         return (ActionEvent e) -> {
             Vocabulary vocabulary = getVocabulary();
@@ -440,14 +492,25 @@ public class NewGameSettingsPage extends Page {
         };
     }
 
+    /**
+     * Starts game with random player names and start word.
+     * Player types and computer player settings stays the same
+     *
+     * @return
+     */
     private ActionListener getRandomGoBtnListener() {
         return (ActionEvent e) -> {
-            try {
                 Vocabulary vocabulary = getVocabulary();
                 if (vocabulary == null) return;
 
                 ResourceBundle resourceBundle = currentLanguage.getResourceBundle();
                 String[] playerNames = resourceBundle.getString("player_names").split("\t*,");
+                if (playerNames.length < 2) {
+                    logger.error("Not enough player names examples");
+                    WordmasterUtils.showErrorAlert(parentView.getFrame(),
+                            "e_game_initializing", parentView.getSettings().getLanguage());
+                    return;
+                }
                 int fpName = (int) (Math.random() * playerNames.length);
                 int spName;
                 do spName = (int) (Math.random() * playerNames.length); while (spName == fpName);
@@ -457,12 +520,13 @@ public class NewGameSettingsPage extends Page {
 
                 List<Player> players = validateAndGetPlayers();
                 if (players == null) return;
-
+            try {
                 String startWord = vocabulary.getRandomWord(GameField.MAX_START_WORD_SIZE);
 
                 startGame(players, vocabulary, startWord);
             } catch (Exception ex) {
                 ex.printStackTrace();
+                logger.error("Unexpected exception at random&go", ex);
             }
         };
     }

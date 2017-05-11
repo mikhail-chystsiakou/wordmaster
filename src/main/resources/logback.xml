@@ -8,9 +8,18 @@
         </encoder>
     </appender>
 
-    <logger name="com.wordmaster" level="trace"
-            additivity="false">
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>wordmaster.log</file>
+        <append>true</append>
+        <immediateFlush>true</immediateFlush>
+        <encoder>
+            <pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="com.wordmaster" level="trace" additivity="false">
         <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
     </logger>
 
     <root level="NONE">

@@ -5,6 +5,13 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+
+/**
+ * Represents human player
+ *
+ * @version 1.0
+ * @author Mike
+ */
 @XmlType
 @XmlAccessorType(XmlAccessType.NONE)
 @XmlAccessorOrder(XmlAccessOrder.ALPHABETICAL)
@@ -31,11 +38,19 @@ public class Player {
         this.name = name;
     }
 
+    /**
+     * Adds word to the list of player words and updates it's score
+     *
+     * @param newWord word to add
+     */
     void addWord(String newWord) {
         score += newWord.length();
         words.add(newWord);
     }
 
+    /**
+     * Removes last word from the list of player words and updates it's score
+     */
     void removeLastWord() {
         if (words.size() > 0) {
             String lastWord = words.get(words.size()-1);
@@ -44,27 +59,42 @@ public class Player {
         }
     }
 
+    /**
+     * Removes all player words and zeroes it's score
+     */
     void clearWords() {
         words.clear();
         score = 0;
     }
 
+    /**
+     * Getter for player name
+     *
+     * @return player's name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Getter for player words
+     *
+     * @return player's words
+     */
     public List<String> getWords() {
         return words;
     }
 
-    public String getLastWord() {
-        return (words.size() > 0) ? words.get(words.size()-1) : null;
-    }
-
+    /**
+     * Getter for player score
+     *
+     * @return player's score
+     */
     public int getScore() {
         return score;
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (obj == null) return false;
         if (obj instanceof Player) {
@@ -72,6 +102,12 @@ public class Player {
             return obj2compare.name.equals(name);
         } else return false;
     }
+
+    /**
+     * Allows to check if player is computer
+     *
+     * @return true if player is computer, false otherwise
+     */
     @XmlAttribute
     public boolean isComputer() {
         return false;

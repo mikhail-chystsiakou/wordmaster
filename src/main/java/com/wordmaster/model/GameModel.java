@@ -1,12 +1,10 @@
 package com.wordmaster.model;
 
-import com.wordmaster.gui.GameFrame;
-import com.wordmaster.gui.page.GamePage;
 import com.wordmaster.model.algorithm.Algorithm;
 import com.wordmaster.model.algorithm.Vocabulary;
 import com.wordmaster.model.exception.ModelException;
 import com.wordmaster.model.exception.ModelInitializeException;
-import com.wordmaster.model.exception.ModelOperationException;
+import com.wordmaster.model.exception.UnsupportedModelOperationException;
 import com.wordmaster.model.exception.ModelStateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +19,12 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Represents one game object. Takes care about it state
+ * and provides game manipulation interface. Has separate
+ * threads to notify subscribers about events and to perform
+ * game operations like move, undo or redo. Can b
+ */
 @XmlRootElement(name="game")
 @XmlType(propOrder = {
         "playerList",
@@ -64,6 +68,14 @@ public class GameModel {
 
     }
 
+    /**
+     * Creates new game model from the specified player list, words vocabulary and
+     * game field base word.
+     *
+     * @param players       list of players
+     * @param vocabulary    vocabulary
+     * @param baseWord      the base word
+     */
     public GameModel(List<Player> players, Vocabulary vocabulary, String baseWord) {
         playerList.addAll(players);
         playerList.forEach((Player player) -> {
@@ -78,11 +90,14 @@ public class GameModel {
         }
         algorithm = new Algorithm(gameField, vocabulary);
         scheduler = new ModelScheduler(this);
-        scheduler.runModelThread();
         notificationThread = new NotificationThread();
         notificationThread.start();
+        scheduler.runModelThread();
     }
 
+    /**
+     * Thread that performs all model operations.
+     */
     void modelThread() {
         logger.trace("Model thread started");
         while (true) {
@@ -100,13 +115,20 @@ public class GameModel {
         }
     }
 
+    /**
+     * Publish move operation to the model thread.
+     *
+     * @param letter        set letter
+     * @param letterCell    set cell
+     * @param resultWord    result word
+     * @throws ModelStateException  if another operation in progress
+     */
     public void makeMove(char letter,
                             GameField.Cell letterCell,
                             GameField.Word resultWord) throws ModelStateException {
         if(isReplay) {
             throw new ModelStateException("Model was loaded in replay mode, cannot make move", null);
         }
-        scheduler.checkOperationInProgressAndLock();
         Move move = new Move();
         move.setNewCellValue(letter);
         move.setCell(letterCell);
@@ -114,42 +136,64 @@ public class GameModel {
 
         currentOperation = new ModelOperation(ModelOperationType.MAKE_MOVE);
         currentOperation.setMove(move);
+
         scheduler.startOperation();
     }
 
+    /**
+     * Publish move generation operation to the model thread.
+     *
+     * @throws ModelStateException  if another operation in progress
+     */
     public void generateMove() throws ModelStateException {
         if(isReplay) {
             throw new ModelStateException("Model was loaded in replay mode, cannot make move", null);
         }
-        scheduler.checkOperationInProgressAndLock();
         Move move = new Move();
         currentOperation = new ModelOperation(ModelOperationType.GENERATE_MOVE);
         currentOperation.setMove(move);
+
         scheduler.startOperation();
     }
 
+    /**
+     * Publish undo operation to the model thread. If replay, redo 1 time,
+     * if not reply, redo 2 times.
+     *
+     * @throws ModelStateException if another operation in progress
+     */
     public void undo() throws ModelStateException {
-        scheduler.checkOperationInProgressAndLock();
-
         currentOperation = new ModelOperation(ModelOperationType.UNDO);
         if(isReplay) {
             currentOperation.setUndoRedoTimes(1);
         }
+
         scheduler.startOperation();
     }
 
+    /**
+     * Public redo operation to model thread. If replay, redo 1 time,
+     * if not reply, redo 2 times.
+     *
+     * @throws ModelStateException if another operation in progress
+     */
     public void redo() throws ModelStateException {
-        scheduler.checkOperationInProgressAndLock();
-
         currentOperation = new ModelOperation(ModelOperationType.REDO);
         if(isReplay) {
             currentOperation.setUndoRedoTimes(1);
         }
+
         scheduler.startOperation();
     }
 
+    /**
+     * Saves model state to the file. Block model changes until complete.
+     * Need to call startGame() after loading.
+     *
+     * @param file path to save
+     */
     public void save(File file) {
-        scheduler.raiseSleep();
+        scheduler.freeze();
         try {
             JAXBContext context =
                     JAXBContext.newInstance( this.getClass(), Player.class,
@@ -161,9 +205,18 @@ public class GameModel {
             logger.warn("Cannot marshal model to file {}", file.getName(), e);
             throw new ModelException("Cannot marshal model to file" + file.getName(), e);
         }
-        scheduler.awake();
+        scheduler.unfreeze();
     }
 
+    /**
+     * Loads and initializes game from file. Need to call startGame()
+     * after loading.
+     *
+     * @param file      file with save
+     * @param vocabulary    vocabulary to use
+     * @param isReplay  is loaded model is replay
+     * @return  loaded game model
+     */
     public static GameModel load(File file, Vocabulary vocabulary, boolean isReplay) {
         try {
             JAXBContext context = JAXBContext.newInstance( GameModel.class, Player.class,
@@ -185,6 +238,7 @@ public class GameModel {
                 }
             });
             loadedModel.notificationThread = new NotificationThread();
+
             loadedModel.notificationThread.start();
             loadedModel.scheduler.runModelThread();
             return loadedModel;
@@ -194,14 +248,23 @@ public class GameModel {
         }
     }
 
+    /**
+     * Prohibits all changes in model until resume()
+     */
     public void pause() {
-        scheduler.raiseSleep();
+        scheduler.freeze();
     }
 
+    /**
+     * Allows model changes.
+     */
     public void resume() {
-        scheduler.awake();
+        scheduler.unfreeze();
     }
 
+    /**
+     * Starts model game logic and internal threads.
+     */
     public void startGame() {
         if (playerList.get(currentPlayer).isComputer()) {
             notificationThread.addTask(() -> {
@@ -212,6 +275,10 @@ public class GameModel {
         }
     }
 
+    /**
+     * Finishes game with the win of second player. Logic can change
+     * in future releases.
+     */
     public void surrender() {
         if (playerList.size() == 2) {
             winners.add(playerList.get(getPreviousPlayer()));
@@ -222,62 +289,134 @@ public class GameModel {
         }
     }
 
+    /**
+     * Game field getter.
+     *
+     * @return model game field
+     */
     public GameField getGameField() {
         return gameField;
     }
 
+    /**
+     * Allows to subscribe on model events.
+     *
+     * @param listener listener to subscribe
+     */
     public void addModelListener(ModelAware listener) {
         modelListeners.add(listener);
     }
 
+    /**
+     * Allows subscribes to go out from subscribe list.
+     *
+     * @param listener listener to unsubscribe
+     */
     public void removeModelListener(ModelAware listener) {
         notificationThread.addTask(() -> {
             modelListeners.remove(listener);
         });
     }
 
+    /**
+     * Returns the previous moving player number.
+     *
+     * @return number of player
+     */
     private int getPreviousPlayer() {
         if (currentPlayer == 0) {
             return playerList.size()-1;
         } else return currentPlayer-1;
     }
+
+    /**
+     * Returns the current player object.
+     *
+     * @return current player
+     */
     public Player getCurrentPlayer() {
         return playerList.get(currentPlayer);
     }
+
+    /**
+     * Returns the next moving player.
+     *
+     * @return number of player
+     */
     private int getNextPlayer() {
         if (currentPlayer == playerList.size()-1) {
             return 0;
         } else return currentPlayer+1;
     }
 
+    /**
+     * Getter for the players list
+     *
+     * @return player list
+     */
     public List<Player> getPlayers() {
         return playerList;
     }
+
+    /**
+     * Getter for the winners list
+     *
+     * @return winners list
+     */
     public List<Player> getWinners() {return winners;}
 
+    /**
+     * Getter for the current move
+     *
+     * @return current move number
+     */
     public int getCurrentMove() {
         return currentMove;
     }
 
+    /**
+     * Getter for replay property
+     *
+     * @return  true if model was started in
+     *          replay mode, false otherwise
+     */
     public boolean isReplay() {
         return isReplay;
     }
 
+    /**
+     * Checks if model can perform undo operation.
+     *
+     * @return true if model can perform undo
+     */
     public boolean canUndo() {
         if (isReplay) return currentMove > 0;
         return currentMove > 1;
     }
+
+    /**
+     * Checks if model can perform redo operation.
+     *
+     * @return true if model can redo
+     */
     public boolean canRedo() {
         if (isReplay) return (moves.size() - currentMove) > 0;
         return (moves.size() - currentMove) > 1;
     }
 
+    /**
+     * Rises kill flags on model threads. Model can not be
+     * used after calling this method
+     */
     public void destroy() {
         // send kill message to model
         notificationThread.raiseDeath();
         scheduler.raiseDeath();
     }
 
+    /**
+     * Calculates winner list
+     */
     private void detectWinners() {
         winners.add(playerList.get(0));
         for (Player player : playerList.subList(1, playerList.size())) {
@@ -290,6 +429,9 @@ public class GameModel {
         }
     }
 
+    /**
+     * Checks if there is any legal move. If not, finishes the game.
+     */
     private void analyzePosition() {
         List<String> allPlayerWords = new LinkedList<>();
         playerList.forEach((Player p) -> {
@@ -311,6 +453,9 @@ public class GameModel {
         }, allPlayerWords);
     }
 
+    /**
+     * Notifies subscribers about game move.
+     */
     private void emitMoveEvent() {
         notificationThread.addTask(() -> {
             pause();
@@ -321,6 +466,9 @@ public class GameModel {
         });
     }
 
+    /**
+     * Notifies subscribers about game ends.
+     */
     private void emitFinishEvent() {
         notificationThread.addTask(() -> {
             pause();
@@ -331,6 +479,9 @@ public class GameModel {
         });
     }
 
+    /**
+     * Notifies subscribers about invalid move.
+     */
     private void emitInvalidMoveEvent(int type) {
         notificationThread.addTask(() -> {
             pause();
@@ -339,6 +490,14 @@ public class GameModel {
         });
     }
 
+    /**
+     * The execution unit, that can be performed on model. Only one
+     * model operation can be run at single moment. Before applying
+     * model changes, checks for model sleep.
+     *
+     * @author Mike
+     * @version 1.0
+     */
     private class ModelOperation {
         private Move move;
         private ModelOperationType type;
@@ -356,6 +515,9 @@ public class GameModel {
             this.undoRedoTimes = undoRedoTimes;
         }
 
+        /**
+         * Detect wich operation to perform and performs it
+         */
         void performOperation() {
             switch (type) {
                 case MAKE_MOVE: {
@@ -376,11 +538,14 @@ public class GameModel {
                 }
                 default: {
                     logger.error("Unsupported model operation type");
-                    throw new ModelOperationException("Unsupported model operation type", null);
+                    throw new UnsupportedModelOperationException("Unsupported model operation type", null);
                 }
             }
         }
 
+        /**
+         * Represents move operation. Move will be validated before apply
+         */
         void makeMove() {
             if (!algorithm.validateMove(move)) {
                 emitInvalidMoveEvent(Move.INVALID_WORD);
@@ -396,10 +561,12 @@ public class GameModel {
                 emitInvalidMoveEvent(Move.ALREADY_USED);
                 return;
             }
-            scheduler.checkAndSleep();
             applyMove(move);
         }
 
+        /**
+         * Represents move generation operation.
+         */
         void generateMove() {
             List<String> allPlayerWords = new LinkedList<>();
             playerList.forEach((Player p) -> {
@@ -407,20 +574,27 @@ public class GameModel {
             });
             allPlayerWords.add(gameField.getStartWord());
             List<Move> generatedMoves = algorithm.generateWithout(allPlayerWords);
-            if (playerList.get(currentPlayer).isComputer()) {
-                move = ((ComputerPlayer)playerList.get(currentPlayer)).selectMove(generatedMoves);
-            }
-            if (move == null) {
+
+            if (generatedMoves == null || generatedMoves.size() == 0) {
                 detectWinners();
                 emitFinishEvent();
                 destroy();
                 return;
             }
-            scheduler.checkAndSleep();
+            if (playerList.get(currentPlayer).isComputer()) {
+                move = ((ComputerPlayer)playerList.get(currentPlayer)).selectMove(generatedMoves);
+            } else {
+                move = generatedMoves.get(0);
+            }
             applyMove(move);
         }
 
+        /**
+         * Applies move. Deletes all information about possible redo operations.
+         * @param move move to apply
+         */
         private void applyMove(Move move) {
+            scheduler.applyOperation();
             //IF NOT REDO delete all commands behind current
             moves.removeAll(new LinkedList<>(moves.subList(currentMove, moves.size())));
 
@@ -448,11 +622,14 @@ public class GameModel {
             }
         }
 
+        /**
+         * Represents undo operation.
+         */
         private void undo() {
-            scheduler.checkAndSleep();
             if (currentMove < undoRedoTimes) {
                 throw new ModelStateException("No moves to undo", null);
             }
+            scheduler.applyOperation();
             for (int i = 0; i < undoRedoTimes; i++) {
                 Move previousMove = moves.get(currentMove - 1);
                 if (isReplay) {
@@ -466,28 +643,32 @@ public class GameModel {
             }
         }
 
+        /**
+         * Represents redo operation.
+         */
         private void redo() {
-            scheduler.checkAndSleep();
-            if (currentMove + undoRedoTimes - 1 < moves.size()) {
-                for (int i = 0; i < undoRedoTimes; i++) {
-                    Move moveToRedo = moves.get(currentMove);
-                    logger.trace("word {} from the {} move", moveToRedo.getResultWord(gameField), currentMove);
+            if (currentMove + undoRedoTimes > moves.size()) {
+                throw new ModelStateException("No moves to redo", null);
+            }
 
-                    // set cell to the game field
-                    moveToRedo.getCell(gameField).setValue(moveToRedo.getNewCellValue());
+            scheduler.applyOperation();
+            for (int i = 0; i < undoRedoTimes; i++) {
+                Move moveToRedo = moves.get(currentMove);
 
-                    // set word to player
-                    if (isReplay) {
-                        playerList.get(currentPlayer).addWord(moveToRedo.getResultWord(gameField).toString());
-                    } else {
-                        playerList.get(getNextPlayer()).addWord(moveToRedo.getResultWord(gameField).toString());
-                    }
-                    // switch to the next player
-                    currentPlayer = getNextPlayer();
+                // set cell to the game field
+                moveToRedo.getCell(gameField).setValue(moveToRedo.getNewCellValue());
 
-                    // increase model current move
-                    currentMove++;
+                // set word to player
+                if (isReplay) {
+                    playerList.get(currentPlayer).addWord(moveToRedo.getResultWord(gameField).toString());
+                } else {
+                    playerList.get(getNextPlayer()).addWord(moveToRedo.getResultWord(gameField).toString());
                 }
+                // switch to the next player
+                currentPlayer = getNextPlayer();
+
+                // increase model current move
+                currentMove++;
             }
         }
     }

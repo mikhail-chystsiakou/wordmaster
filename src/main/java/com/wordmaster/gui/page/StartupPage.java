@@ -24,6 +24,12 @@ import java.util.ResourceBundle;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+/**
+ * Represents the entry point of application
+ *
+ * @version 1.0
+ * @author Mike
+ */
 public class StartupPage extends Page {
     private static final Logger logger = LoggerFactory.getLogger(StartupPage.class);
     private Map<Buttons, JButton> pageButtons = new HashMap<>();
@@ -79,6 +85,7 @@ public class StartupPage extends Page {
 
         setButtonsText();
     }
+
     protected void updateLanguage() {
         setButtonsText();
     }
@@ -92,6 +99,12 @@ public class StartupPage extends Page {
         pageButtons.get(Buttons.EXIT).setText(resourceBundle.getString("exit"));
     }
 
+    /**
+     * Loads game or replay. Shows file chooser to specify save/replay path.
+     * On error, shows error message and return null
+     *
+     * @return loaded model on success, null on error
+     */
     private GameModel loadGame(boolean isReplay) {
         JFileChooser fc = new JFileChooser();
         fc.setCurrentDirectory(new File("./"));
@@ -104,22 +117,31 @@ public class StartupPage extends Page {
         Language language = parentView.getSettings().getLanguage();
         Future<Vocabulary> vocabulary = Vocabulary.getVocabulary(language);
         if (!vocabulary.isDone()) {
-            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Wait please, vocabulary is still loading");
+            WordmasterUtils.showErrorAlert(parentView.getFrame(),
+                    "vocabulary_loading", parentView.getSettings().getLanguage());
             return null;
         }
         try {
             return GameModel.load(file, vocabulary.get(), isReplay);
         } catch (ExecutionException | InterruptedException exception) {
             logger.error("Exception during loading vocabulary", exception);
-            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Vocabulary loading error");
+            WordmasterUtils.showErrorAlert(parentView.getFrame(),
+                    "e_vocabulary_loading", parentView.getSettings().getLanguage());
             return null;
         } catch (ModelException exception) {
             logger.error("Exception during loading model", exception);
-            WordmasterUtils.showErrorAlert(parentView.getFrame(), "Game loading error");
+            WordmasterUtils.showErrorAlert(parentView.getFrame(),
+                    "e_game_loading", parentView.getSettings().getLanguage());
             return null;
         }
     }
 
+    /**
+     * Creates listener for the game loading.
+     * On success loading, game page will be shown
+     *
+     * @return listener for the game loading
+     */
     private ActionListener getLoadGameActionListener() {
         return (ActionEvent e) -> {
             GamePage gamePage = (GamePage)parentView.getPage(View.Pages.GAME);
@@ -131,6 +153,12 @@ public class StartupPage extends Page {
         };
     }
 
+    /**
+     * Creates listener for the game loading in replay mode
+     * On success loading, game page will be shown
+     *
+     * @return listener for the game loading in replay mode
+     */
     private ActionListener getAnalyzeReplayActionListener() {
         return (ActionEvent e) -> {
             GamePage gamePage = (GamePage)parentView.getPage(View.Pages.GAME);

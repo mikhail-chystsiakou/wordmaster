@@ -9,13 +9,17 @@ import javax.xml.bind.annotation.XmlList;
 import javax.xml.bind.annotation.XmlType;
 import java.util.*;
 
+/**
+ * Represents game field. Internally stores cells in char array
+ * and has pretty useful cell and word wrappers.
+ */
 @XmlType
 public class GameField {
     private static final Logger logger = LoggerFactory.getLogger(GameField.class);
-    public final static int FIELD_WIDTH = 5;
-    public final static int FIELD_HEIGHT = 5;
+    public final static int FIELD_WIDTH = 7;
+    public final static int FIELD_HEIGHT = 7;
     public final static int MIN_START_WORD_SIZE = 3;
-    public final static int MAX_START_WORD_SIZE = 5;
+    public final static int MAX_START_WORD_SIZE = 7;
     public final static char EMPTY_CELL_VALUE = ' ';
     @XmlElement
     private char[][] field = new char[FIELD_HEIGHT][FIELD_WIDTH];
@@ -27,8 +31,13 @@ public class GameField {
 
     }
 
+    /**
+     * Initializes game field with start word.
+     *
+     * @param word start word
+     */
     GameField(String word) {
-        if (word.length() > FIELD_WIDTH || word.length() == 0) {
+        if (word == null || word.length() > FIELD_WIDTH || word.length() == 0) {
             logger.error("Invalid size of GameField base word {}", word);
             throw new IllegalArgumentException("Illegal word size");
         }
@@ -36,6 +45,12 @@ public class GameField {
         clear();
     }
 
+    /**
+     * Returns all cells, that can be used in move. The cell must be
+     * free be near to not-empty cell.
+     *
+     * @return list of available cells
+     */
     public List<Cell> getAvailableCells() {
         List<Cell> availableCells = new LinkedList<>();
         for (int y = 0; y < FIELD_HEIGHT; y++) {
@@ -47,6 +62,10 @@ public class GameField {
         return availableCells;
     }
 
+    /**
+     * Fills game field with default empty cell values and
+     * restores start word
+     */
     void clear() {
         int wordStartPosition = (FIELD_WIDTH-startWord.length())/2;
         for (int y = 0; y < FIELD_HEIGHT; y++) {
@@ -55,14 +74,28 @@ public class GameField {
             }
         }
         for (int i = 0; i < startWord.length(); i++) {
-            field[FIELD_HEIGHT/2][wordStartPosition+i] = startWord.charAt(i);
+            field[(FIELD_HEIGHT-1)/2][wordStartPosition+i] = startWord.charAt(i);
         }
     }
 
+    /**
+     * Creates the cell wrapper object. Top left corner
+     * is the count start point.
+     *
+     * @param x x position of cell
+     * @param y y position of cell
+     * @return cell wrapper object
+     */
     public Cell getCell(int x, int y) {
         return new Cell(x, y);
     }
 
+    /**
+     * Creates the word wrapper object.
+     *
+     * @param arr array of row game cells that are part of word
+     * @return word wrapper object
+     */
     public Word getWord(int[][] arr) {
         Word word = new Word();
         for (int[] cell : arr) {
@@ -71,10 +104,18 @@ public class GameField {
         return word;
     }
 
+    /**
+     * Getter for start word.
+     *
+     * @return start word
+     */
     public String getStartWord() {
         return startWord;
     }
 
+    /**
+     * Wrapper class for the game field cell.
+     */
     public class Cell {
         int x;
         int y;
@@ -84,26 +125,58 @@ public class GameField {
             this.y = y;
         }
 
+        /**
+         * Checks if cell is empty.
+         *
+         * @return true if cell if empty, false otherwise
+         */
         public boolean isEmpty() {
             return getValue() == EMPTY_CELL_VALUE;
         }
 
+        /**
+         * Returns the value of game field in cell position.
+         *
+         * @return cell value
+         */
         public char getValue() {
             return field[y][x];
         }
 
+        /**
+         * Set the value of game field in cell position.
+         *
+         * @param value field value
+         */
         void setValue(char value) {
             field[y][x] = value;
         }
 
+        /**
+         * Cell x position getter.
+         *
+         * @return cell x position
+         */
         public int getX() {
             return x;
         }
 
+        /**
+         * Cell y position getter
+         *
+         * @return cell y position
+         */
         public int getY() {
             return y;
         }
 
+        /**
+         * Checks if cell is near. Each no-corner cell has 4
+         * near cells, on top, bot, left and right.
+         *
+         * @param cell cell to check
+         * @return true if cell is near, false otherwise
+         */
         public boolean isNear(Cell cell) {
             if (cell == null) return false;
             boolean xNear = Math.abs(cell.getX() - x) < 2;
@@ -120,29 +193,55 @@ public class GameField {
             } else return false;
         }
 
+        /**
+         * Returns the cell on left.
+         *
+         * @return cell on the left or null for the left-corner cell
+         */
         public Cell getLeft() {
             if (x > 0) {
                 return new Cell(x-1, y);
             } else return null;
         }
+
+        /**
+         * Returns the cell on right.
+         *
+         * @return cell on the right or null for the right-corner cell
+         */
         public Cell getRight() {
             if (x < FIELD_WIDTH - 1) {
                 return new Cell(x+1, y);
             } else return null;
         }
 
+        /**
+         * Returns the cell on top.
+         *
+         * @return cell on the top or null for the left-corner cell
+         */
         public Cell getTop() {
             if (y > 0) {
                 return new Cell(x, y-1);
             } else return null;
         }
 
+        /**
+         * Returns the cell on bottom.
+         *
+         * @return cell on the bottom or null for the left-corner cell
+         */
         public Cell getBottom() {
             if (y < FIELD_HEIGHT - 1) {
                 return new Cell(x, y+1);
             } else return null;
         }
 
+        /**
+         * Returns near cells. Near cells must have one common edge.
+         *
+         * @return list of near cells.
+         */
         public List<Cell> getNearCells() {
             LinkedList<Cell> nearCells = new LinkedList<>();
             if (getLeft() != null) nearCells.add(getLeft());
@@ -152,6 +251,12 @@ public class GameField {
             return nearCells;
         }
 
+        /**
+         * Checks if cell is standalone. Cell is stanadalone if
+         * all it's near cells are empty.
+         *
+         * @return true is cell is standalone
+         */
         public boolean isStandalone() {
             Cell left = getLeft();
             Cell right = getRight();
@@ -177,6 +282,10 @@ public class GameField {
         }
     }
 
+    /**
+     * Wrapper class for the game field word. Word is just an array
+     * of game cells.
+     */
     public static class Word {
         private List<Cell> word = Collections.synchronizedList(new LinkedList<>());
 
@@ -184,9 +293,6 @@ public class GameField {
             word.add(letter);
         }
 
-        public boolean isEmpty() {
-            return word.isEmpty();
-        }
         public Cell popLetter() {
             if (word.size() > 0) {
                 Cell cellToReturn = word.get(word.size()-1);
@@ -196,27 +302,42 @@ public class GameField {
             return null;
         }
 
+        public boolean isEmpty() {
+            return word.isEmpty();
+        }
+
         public boolean contains(Cell cell) {
             return word.contains(cell);
         }
 
-        public Cell getEmptyCell() {
-            for (Cell c : word) {
-                if (c.getValue() == EMPTY_CELL_VALUE) return c;
-            }
-            return null;
-        }
-
-        public Cell getLast() {
+        /**
+         * Returns the last letter of the word.
+         *
+         * @return last letter
+         */
+        public Cell getLastLetter() {
+            if (word.size() == 0) return null;
             return word.get(word.size()-1);
         }
 
+        /**
+         * Creates a clone of word.
+         * @return the clone of word
+         */
         public Word copy() {
             Word clone = new Word();
             clone.word = Collections.synchronizedList(new LinkedList<>(word));
             return clone;
         }
 
+        /**
+         * If there is empty cell inside the word, fills its with specified
+         * value and returns result word as string. Note, that field stay
+         * unmodified.
+         *
+         * @param c chat to set in gap
+         * @return word without gap
+         */
         public String fillGap(char c) {
             StringBuilder sb = new StringBuilder();
             word.forEach((Cell cell) -> {
@@ -237,6 +358,9 @@ public class GameField {
             return arr;
         }
 
+        /**
+         * Reverses the word.
+         */
         public void reverse() {
             Collections.reverse(word);
         }

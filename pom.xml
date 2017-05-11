@@ -6,7 +6,7 @@
 
     <groupId>com.wordmaster</groupId>
     <artifactId>wordmaster</artifactId>
-    <version>1.0.0</version>
+    <version>1.5</version>
     <packaging>jar</packaging>
 
     <dependencies>

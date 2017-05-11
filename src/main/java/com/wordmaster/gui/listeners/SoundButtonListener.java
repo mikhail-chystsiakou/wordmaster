@@ -7,7 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * Produces required sound effect before action
+ * Produces required sound effect during action
  *
  * @author zoxal
  * @version 1.0
@@ -16,8 +16,6 @@ public class SoundButtonListener implements ActionListener {
     private AudioPlayer.SoundType soundType;
     private View view;
 
-
-
     public SoundButtonListener (View view, AudioPlayer.SoundType soundType) {
         this.view = view;
         this.soundType = soundType;
@@ -25,7 +23,5 @@ public class SoundButtonListener implements ActionListener {
 
     public void actionPerformed(ActionEvent event) {
         view.getPlayer().playSound(soundType);
-        // Get sound settings from view.getSettings()
-        // Produce sound effect
     }
 }

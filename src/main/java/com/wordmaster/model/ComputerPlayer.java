@@ -6,18 +6,28 @@ import org.slf4j.LoggerFactory;
 import javax.xml.bind.annotation.*;
 import java.util.*;
 
+/**
+ * Represents computer player. Move selecting logic
+ * depends on difficulty.
+ *
+ * @author Mike
+ * @version 1.0
+ */
 @XmlType
 @XmlAccessorType(XmlAccessType.NONE)
 @XmlAccessorOrder(XmlAccessOrder.ALPHABETICAL)
 public class ComputerPlayer extends Player implements ModelAware {
     private static final Logger logger = LoggerFactory.getLogger(ComputerPlayer.class);
+
+    /**
+     * The computer player difficulty.
+     */
     public enum Difficulty {
         EASY {
             protected TreeMap<Integer, Integer> getTakeProbabilityMap() {
                 TreeMap<Integer, Integer> skipProbabilityMap = new TreeMap<>();
-                skipProbabilityMap.put(2, 80);
-                skipProbabilityMap.put(4, -1);
-//                skipProbabilityMap.put(5, 3);
+                skipProbabilityMap.put(2, 70);
+                skipProbabilityMap.put(4, 10);
                 return skipProbabilityMap;
             }
         },
@@ -36,15 +46,21 @@ public class ComputerPlayer extends Player implements ModelAware {
         HARD {
             protected TreeMap<Integer, Integer> getTakeProbabilityMap() {
                 TreeMap<Integer, Integer> skipProbabilityMap = new TreeMap<>();
-                skipProbabilityMap.put(2, -1);
+                skipProbabilityMap.put(2, 0);
                 skipProbabilityMap.put(4, 10);
-                skipProbabilityMap.put(5, 100);
-//                skipProbabilityMap.put(6, 90);
+                skipProbabilityMap.put(5, 90);
                 return skipProbabilityMap;
             }
         };
         protected abstract TreeMap<Integer, Integer> getTakeProbabilityMap();
 
+        /**
+         * Makes a decision if computer player should take word based
+         * on word length.
+         *
+         * @param wordLength the word length.
+         * @return true if computer player accepts this move
+         */
         public boolean needToShouldTake(int wordLength) {
             if (wordLength < 2) return true;
             int randomPercent = new Random().nextInt(100);
@@ -71,6 +87,12 @@ public class ComputerPlayer extends Player implements ModelAware {
         return true;
     }
 
+    /**
+     * Selects one move from list according to computer difficulty.
+     *
+     * @param variants list ov move variants
+     * @return selected move
+     */
     Move selectMove(List<Move> variants) {
         if (variants.size() == 0) return null;
         Collections.shuffle(variants);
@@ -88,6 +110,12 @@ public class ComputerPlayer extends Player implements ModelAware {
     public void onFinish(GameModel model) {
 
     }
+
+    /**
+     * If it's computer move, asks model to generate one
+     *
+     * @param model changed model object
+     */
     @Override
     public void onMove(GameModel model) {
         if (model.isReplay()) return;

@@ -7,12 +7,22 @@ import javax.sound.sampled.*;
 import java.io.IOException;
 import java.net.URL;
 
+/**
+ * Stands for playing game sounds and background music.
+ *
+ * @author Mike
+ * @version 1.0
+ */
 public class AudioPlayer {
     private final static Logger logger = LoggerFactory.getLogger(AudioPlayer.class);
     private final static String BACKGROUND_MUSIC_FILE = "sounds/neverhood.wav";
     private Clip backgroundMusic;
     private int soundsVolume = 100;
 
+    /**
+     * Represents on game sound that can be played.
+     * Contains information about where it's situated.
+     */
     public enum SoundType {
         STANDARD_BUTTON("sounds/bup.wav");
 
@@ -58,6 +68,9 @@ public class AudioPlayer {
         }
     }
 
+    /**
+     * Prepares background music but not starts it.
+     */
     public AudioPlayer() {
         try {
             URL backgroundMusicURL = this.getClass().getClassLoader().getResource(BACKGROUND_MUSIC_FILE);
@@ -74,6 +87,9 @@ public class AudioPlayer {
         }
     }
 
+    /**
+     * Starts background music
+     */
     public void startBackgroundMusic() {
         if (backgroundMusic != null) {
             backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);
@@ -81,11 +97,32 @@ public class AudioPlayer {
         }
     }
 
+    /**
+     * Stops background music
+     */
+    public void stopBackgroundMusic() {
+        if (backgroundMusic != null) {
+            backgroundMusic.stop();
+        }
+    }
+
+    /**
+     * Plays game sound with desired loud.
+     *
+     * @param soundType sound type
+     */
     public void playSound(SoundType soundType) {
         soundType.play(soundsVolume);
     }
 
+    /**
+     * Sets background music volume, specified in percents.
+     * Internally converts it to decibels.
+     *
+     * @param volumePercent volume percent of music
+     */
     public void setBackgroundMusicVolume(int volumePercent) {
+        if (backgroundMusic == null) return;
         if (volumePercent > 100) volumePercent = 100;
         if (volumePercent < 0) volumePercent = 0;
         FloatControl gainControl;
@@ -105,6 +142,11 @@ public class AudioPlayer {
         gainControl.setValue(newVolume);
     }
 
+    /**
+     * Sets sounds volume in percents.
+     *
+     * @param volumePercent volume percent of sounds
+     */
     public void setSoundsVolume(int volumePercent) {
         if (volumePercent > 100) volumePercent = 100;
         if (volumePercent < 0) volumePercent = 0;

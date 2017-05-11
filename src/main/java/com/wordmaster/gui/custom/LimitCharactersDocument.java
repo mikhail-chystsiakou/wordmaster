@@ -4,9 +4,21 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 
+/**
+ * Custom text document type that supports limited amount of letters
+ *
+ * @version 1.0
+ * @author Mike
+ */
 public class LimitCharactersDocument extends PlainDocument {
     private int maxChars;
 
+    /**
+     * Creates custom text document type that supports
+     * limited amount of letters
+     *
+     * @param maxChars chars limit
+     */
     public LimitCharactersDocument(int maxChars) {
         this.maxChars = maxChars;
     }

@@ -12,6 +12,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
+/**
+ * Represents settings for the concrete view. Can be
+ * saved and loaded from file
+ *
+ * @author Mike
+ * @version 1.0
+ */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.NONE)
 public class Settings implements Cloneable {
@@ -26,6 +33,9 @@ public class Settings implements Cloneable {
     @XmlElement
     private int musicVolume = 50;
 
+    /**
+     * Enumeration for LAF that application supports
+     */
     @XmlEnum
     public enum SupportedLAF {
         METAL {
@@ -54,16 +64,28 @@ public class Settings implements Cloneable {
         };
         public abstract String getPackageString();
     }
-    // for the jaxb
+
+    // for the jaxb proper work
     public Settings(){
 
     }
 
+    /**
+     * The copy constructor
+     *
+     * @param settingsToClone the object to clone
+     */
     public Settings(Settings settingsToClone) {
         this.applySettings(settingsToClone);
     }
 
-
+    /**
+     * Modifies current <code>Settings</code> object to be equals to the
+     * settingsToApply parameter
+     *
+     * @param settingsToApply the settings to apply
+     * @return wasModified if any field was modified
+     */
     public boolean applySettings(Settings settingsToApply) {
         boolean wasModified = false;
         if (settingsToApply == null) return false;
@@ -85,7 +107,15 @@ public class Settings implements Cloneable {
         }
         return wasModified;
     }
-    // async
+
+    /**
+     * Asynchronously saves provided <code>Settings</code> object to
+     * specified file
+     *
+     * @param settingsFile path to settings file
+     * @param settings <code>Settings</code> object to save
+     * @param onError callback to call on error
+     */
     public static void saveSettings(String settingsFile, Settings settings, Runnable onError) {
         final Thread asyncSaving = new Thread(()->{
             try {
@@ -104,7 +134,14 @@ public class Settings implements Cloneable {
         });
         asyncSaving.start();
     }
-    // sync
+
+    /**
+     * Synchronously loads settings from the file
+     *
+     * @param settingsFile path to settings file
+     * @param onError callback to call on error
+     * @return loaded <code>Settings</code> object
+     */
     public static Settings loadSettings(String settingsFile, Runnable onError) {
         File expectedSettingsFile = new File(settingsFile);
         Settings savedSettings = new Settings();
@@ -121,34 +158,72 @@ public class Settings implements Cloneable {
         return savedSettings;
     }
 
+    /**
+     * LAF getter
+     *
+     * @return current LAF
+     */
     public SupportedLAF getLAF() {
         return LAF;
     }
 
-    public Language getLanguage() {
-        return language;
-    }
+    /**
+     * <code>Language</code> getter
+     *
+     * @return current <code>Language</code>
+     */
+    public Language getLanguage() {return language;}
 
-    public void setLAF(SupportedLAF LAF) {
-        this.LAF = LAF;
-    }
-
-    public void setLanguage(Language lang) {
-        this.language = lang;
-    }
-
+    /**
+     * Sound volume getter
+     *
+     * @return current sound volume
+     */
     public int getSoundVolume() {
         return soundVolume;
     }
 
-    public void setSoundVolume(int soundVolume) {
-        this.soundVolume = soundVolume;
-    }
-
+    /**
+     * Music volume getter
+     *
+     * @return current music volume
+     */
     public int getMusicVolume() {
         return musicVolume;
     }
 
+    /**
+     * LAF setter
+     *
+     * @param LAF LAF to set
+     */
+    public void setLAF(SupportedLAF LAF) {
+        this.LAF = LAF;
+    }
+
+    /**
+     * Language setter
+     *
+     * @param lang language to set
+     */
+    public void setLanguage(Language lang) {
+        this.language = lang;
+    }
+
+    /**
+     * Sound volume setter
+     *
+     * @param soundVolume sound volume to set
+     */
+    public void setSoundVolume(int soundVolume) {
+        this.soundVolume = soundVolume;
+    }
+
+    /**
+     * Music volume setter
+     *
+     * @param musicVolume music volume to set
+     */
     public void setMusicVolume(int musicVolume) {
         this.musicVolume = musicVolume;
     }

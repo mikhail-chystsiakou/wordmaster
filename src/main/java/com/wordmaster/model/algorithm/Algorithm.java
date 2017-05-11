@@ -7,6 +7,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Performs game move calculations.
+ *
+ * @author Mike
+ * @version  1.0
+ */
 public class Algorithm {
     private PrefixTree prefixTree;
     private ReversedPrefixTree reversedPrefixTree;
@@ -18,12 +24,23 @@ public class Algorithm {
         reversedPrefixTree = vocabulary.getReversedPrefixTree();
     }
 
+    /**
+     * Checks if move is valid.
+     *
+     * @param move move to check
+     * @return true if move is valid, false otherwise
+     */
     public boolean validateMove(Move move) {
         String suggestion = move.getResultWordAsString(gameField);
         PrefixTree searchResult = prefixTree.goTo(suggestion);
         return searchResult != null && searchResult.isEnd();
     }
 
+    /**
+     * Generates all available moves.
+     *
+     * @return list ov available moves
+     */
     public List<Move> generateMoves() {
         List<Move> suggestions = new LinkedList<>();
         gameField.getAvailableCells().forEach((GameField.Cell cell) -> {
@@ -68,15 +85,25 @@ public class Algorithm {
         // that's all
         return suggestions;
     }
-    // currentWord must contain at least one letter
+
+    /**
+     * Helper method that finds all the words in tree, that
+     * can be created from current word. Current word must contain
+     * at least one letter.
+     *
+     * @param tree  tree to find words from
+     * @param result    list in which results will accumulate
+     * @param currentWord   word to start from
+     */
     private void findTreeValueNodes(PrefixTree tree, List<GameField.Word> result,
                                     GameField.Word currentWord) {
+        if (currentWord.getLastLetter() == null) return;
         if (tree == null) return;
         if (tree.isEnd()) {
             result.add(currentWord.copy());
         }
 
-        currentWord.getLast().getNearCells().forEach((GameField.Cell nearCell) -> {
+        currentWord.getLastLetter().getNearCells().forEach((GameField.Cell nearCell) -> {
             if (tree.getSubNodesKeys().contains(nearCell.getValue())
                 && !currentWord.contains(nearCell)) {
                 currentWord.pushLetter(nearCell);
@@ -86,8 +113,15 @@ public class Algorithm {
         });
     }
 
+    /**
+     * Generates words, that are different from specified 'without list'.
+     *
+     * @param withoutList   words that should not be included in result
+     * @return list on generated words
+     */
     public List<Move> generateWithout(List<String> withoutList) {
         List<Move> suggestions = generateMoves();
+        if (withoutList == null) return suggestions;
         List<Move> suggestionsWithout = new LinkedList<>();
         suggestions.forEach((Move move) -> {
             if (!withoutList.contains(move.getResultWordAsString(gameField))) {
@@ -97,6 +131,13 @@ public class Algorithm {
         return suggestionsWithout;
     }
 
+    /**
+     * Allows to run move generator in additional thread with
+     * calling callback after computation result.
+     *
+     * @param callback  callback to call after move generation
+     * @param withoutList   words that should not appear in result
+     */
     public void predictMove(MoveGeneratedCallback callback, List<String> withoutList) {
         new Thread(()-> {
             List<Move> suggestions = generateWithout(withoutList);
