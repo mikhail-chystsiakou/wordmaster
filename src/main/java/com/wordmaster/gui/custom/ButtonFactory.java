@@ -2,6 +2,7 @@ package com.wordmaster.gui.custom;
 
 import com.wordmaster.gui.View;
 import com.wordmaster.gui.audio.AudioPlayer;
+import com.wordmaster.gui.audio.SoundType;
 import com.wordmaster.gui.listeners.MenuItemListener;
 import com.wordmaster.gui.listeners.SoundButtonListener;
 
@@ -26,7 +27,7 @@ public class ButtonFactory {
         JButton button = new JButton(text);
         button.setFont(new Font("Arial", Font.PLAIN, 18));
         button.addActionListener(new SoundButtonListener(
-                parentView, AudioPlayer.SoundType.STANDARD_BUTTON));
+                parentView, SoundType.STANDARD_BUTTON));
         return button;
     }
 

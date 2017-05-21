@@ -2,6 +2,7 @@ package com.wordmaster.gui.page;
 
 import com.wordmaster.gui.*;
 import com.wordmaster.gui.audio.AudioPlayer;
+import com.wordmaster.gui.audio.SoundType;
 import com.wordmaster.gui.custom.ButtonFactory;
 import com.wordmaster.gui.custom.LabelFactory;
 import com.wordmaster.gui.custom.WordmasterUtils;
@@ -74,7 +75,7 @@ public class SettingsPage extends Page {
         lafPicker = new JComboBox<>(Settings.SupportedLAF.values());
         lafPicker.setSelectedItem(settings.getLAF());
         lafPicker.addItemListener((ItemEvent e) ->
-                settings.setLAF((Settings.SupportedLAF) e.getItem())
+            settings.setLAF((Settings.SupportedLAF) e.getItem())
         );
         lafPicker.setPreferredSize(new Dimension(100, 25));
         lafPicker.setFont(new Font("Arial", Font.PLAIN, 17));
@@ -85,7 +86,7 @@ public class SettingsPage extends Page {
 
         JSlider musicVolume = new JSlider(0, 100, settings.getMusicVolume());
         musicVolume.addChangeListener((ChangeEvent e) ->
-                settings.setMusicVolume(((JSlider)e.getSource()).getValue())
+            settings.setMusicVolume(((JSlider)e.getSource()).getValue())
         );
         musicVolume.setPreferredSize(new Dimension(100, 40));
 
@@ -93,23 +94,24 @@ public class SettingsPage extends Page {
         soundsLabel.setBackground(Color.WHITE);
         pageLabels.put (Labels.SOUNDS, soundsLabel);
 
-        JSlider soundsVolume = new JSlider();
+        JSlider soundsVolume = new JSlider(0, 100, settings.getSoundVolume());
+        soundsVolume.setValue(parentView.getSettings().getSoundVolume());
         soundsVolume.addChangeListener((ChangeEvent e) ->
-                settings.setSoundVolume(((JSlider)e.getSource()).getValue())
+            settings.setSoundVolume(((JSlider)e.getSource()).getValue())
         );
         soundsVolume.setPreferredSize(new Dimension(100, 40));
 
         JButton saveBtn = ButtonFactory.getStandardButton(parentView);
         saveBtn.addActionListener(getSaveBtnListener());
         saveBtn.addActionListener(
-                new SoundButtonListener(parentView, AudioPlayer.SoundType.STANDARD_BUTTON)
+            new SoundButtonListener(parentView, SoundType.STANDARD_BUTTON)
         );
         pageButtons.put(Buttons.SAVE, saveBtn);
 
         JButton applyBtn = ButtonFactory.getStandardButton(parentView);
         applyBtn.addActionListener(getApplyBtnListener());
         applyBtn.addActionListener(
-                new SoundButtonListener(parentView, AudioPlayer.SoundType.STANDARD_BUTTON)
+                new SoundButtonListener(parentView, SoundType.STANDARD_BUTTON)
         );
         pageButtons.put(Buttons.APPLY, applyBtn);
 
@@ -206,7 +208,7 @@ public class SettingsPage extends Page {
         setButtonsText();
     }
 
-    protected void updateLanguage() {
+    protected void update() {
         setLabelsText();
         setButtonsText();
     }
@@ -255,7 +257,7 @@ public class SettingsPage extends Page {
                             "e_saving_error", parentView.getSettings().getLanguage())
             );    // async call
             settings = parentView.getSettings();
-            updateLanguage();
+            update();
         };
     }
 
@@ -270,7 +272,7 @@ public class SettingsPage extends Page {
             parentView.applySettings(settings);
             new MenuItemListener(parentView, View.Pages.SETTINGS).actionPerformed(e);
             settings = parentView.getSettings();
-            updateLanguage();
+            update();
         };
     }
 }

@@ -5,7 +5,6 @@ import com.wordmaster.gui.custom.ButtonFactory;
 import com.wordmaster.gui.custom.LabelFactory;
 import com.wordmaster.gui.View;
 import com.wordmaster.gui.custom.WordmasterUtils;
-import com.wordmaster.gui.i18n.Language;
 import com.wordmaster.model.*;
 import com.wordmaster.model.exception.ModelException;
 import com.wordmaster.model.exception.ModelStateException;
@@ -70,7 +69,6 @@ public class GamePage extends Page implements ModelAware {
      */
     public void preShow() {
         super.preShow();
-        logger.debug("preshow");
         if (model == null) {
             throw new PageException("Page can not be shown without model", null);
         }
@@ -322,11 +320,11 @@ public class GamePage extends Page implements ModelAware {
         gbc.gridwidth = 3;
         page.add(bottomButtonsPanel, gbc);
 
-        updateLanguage();
+        update();
         setupKeyListener();
     }
 
-    protected void updateLanguage() {
+    protected void update() {
         setLabelsText();
         setButtonsText();
     }
@@ -624,6 +622,7 @@ public class GamePage extends Page implements ModelAware {
         fc.showSaveDialog(parentView.getFrame());
         File file = fc.getSelectedFile();
         if (file == null) {
+            System.out.println("File == null");
             model.resume();
             return;
         }

@@ -263,10 +263,10 @@ public class NewGameSettingsPage extends Page {
         gbc.gridy = 3;
         gbc.insets = new Insets(0, 0, 20, 0);
         page.add(bottomButtonsPanel, gbc);
-        updateLanguage();
+        update();
     }
 
-    protected void updateLanguage() {
+    protected void update() {
         setLabelsText();
         setButtonsText();
         setTitledBordersText();
@@ -437,7 +437,7 @@ public class NewGameSettingsPage extends Page {
         Future<Vocabulary> vocabulary = Vocabulary.getVocabulary(language);
         if (!vocabulary.isDone()) {
             WordmasterUtils.showErrorAlert(parentView.getFrame(),
-                    "vocabulary_loading", parentView.getSettings().getLanguage());
+                    "e_vocabulary_loading", parentView.getSettings().getLanguage());
             return null;
         }
         try {

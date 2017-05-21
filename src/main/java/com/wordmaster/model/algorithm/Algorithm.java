@@ -48,7 +48,7 @@ public class Algorithm {
 
             for (char c : reversedPrefixTree.getSubNodesKeys()) {
                 // consider you wish to insert this char
-                if (!reversedPrefixTree.getSubNodesKeys().contains(c)) continue;
+//                if (!reversedPrefixTree.getSubNodesKeys().contains(c)) continue;
 
                 // first, get all valid reversed begins
                 List<GameField.Word> reversedWordBegins = new LinkedList<>();

@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Phaser;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Utility class to control model thread operations. Thread has 3 phase:
@@ -27,9 +28,9 @@ public class ModelScheduler {
     private Thread modelThread;
     private Semaphore operationInProgress = new Semaphore(1);   // 0 if in progress
     private boolean operationInProgressFlag = false;
-    private Semaphore operationApplication = new Semaphore(1);  // 0 during application
+    private final Object operationApplicationMonitor = new Object();  // 0 during application
+    private int freezeCount;
     private boolean threadDeathFlag = false;
-    private boolean isFrozen = false;
 
     ModelScheduler(GameModel model) {
         this.model = model;
@@ -64,10 +65,14 @@ public class ModelScheduler {
      * has been frozen, blocks until unfreeze.
      */
     void applyOperation() {
-        try {
-            operationApplication.acquire();
-        } catch (InterruptedException e) {
-            logger.error("Model thread interrupted during waiting for moves");
+        synchronized (operationApplicationMonitor) {
+            while (freezeCount > 0) {
+                try {
+                    operationApplicationMonitor.wait();
+                } catch (InterruptedException e) {
+                    logger.error("Model thread interrupted during waiting for moves");
+                }
+            }
         }
     }
 
@@ -75,7 +80,6 @@ public class ModelScheduler {
      * Allows another operation to be started.
      */
     synchronized void endOperation() {
-        operationApplication.release();
         operationInProgressFlag = false;
         operationInProgress.release();
     }
@@ -98,27 +102,19 @@ public class ModelScheduler {
      * no changes can be applied to model.
      */
     void freeze() {
-        synchronized (this) {
-            if (isFrozen) return;
-            isFrozen = true;
+        synchronized (operationApplicationMonitor) {
+            freezeCount++;
         }
-        try {
-            operationApplication.acquire();
-        } catch (InterruptedException e) {
-            logger.error("Model thread interrupted during freezing");
-        }
-
     }
 
     /**
      * Unfreezes model that any changes can be applied.
      */
     void unfreeze() {
-        synchronized (this) {
-            if (!isFrozen) return;
-            isFrozen = false;
+        synchronized (operationApplicationMonitor) {
+            freezeCount--;
+            operationApplicationMonitor.notify();
         }
-        operationApplication.release();
     }
 
     /**

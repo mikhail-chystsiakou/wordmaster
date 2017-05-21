@@ -41,7 +41,7 @@ public abstract class Page {
         Language newLanguage = parentView.getSettings().getLanguage();
         if (currentLanguage != newLanguage) {
             currentLanguage = newLanguage;
-            updateLanguage();
+            update();
         }
     }
 
@@ -53,7 +53,7 @@ public abstract class Page {
     /**
      * Forces page to re-render all language-depended labels
      */
-    protected abstract void updateLanguage();
+    protected abstract void update();
 
     /**
      * Initializes page and all it's components

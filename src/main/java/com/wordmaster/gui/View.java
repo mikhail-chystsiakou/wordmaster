@@ -51,8 +51,8 @@ public class View {
             }
             showPage(Pages.STARTUP);
             frame.setResizable(false);
-            player.startBackgroundMusic();
             frame.setVisible(true);
+            player.startBackgroundMusic();
         });
     }
 
@@ -149,14 +149,20 @@ public class View {
      * Creates the frame, initializes pages and trying to load existing settings.
      */
     private void initialize() {
+        Settings loadedSettings = Settings.loadSettings(Settings.DEFAULT_SETTINGS_FILE, () -> {
+            WordmasterUtils.showErrorAlert(frame,
+                    "e_settings_loading", settings.getLanguage());
+        });
+        applySettings(loadedSettings);
+
         frame = new JFrame();
         frame.setTitle("Wordmaster");
         frame.addWindowListener(new WindowAdapter(){
             public void windowClosing(WindowEvent e){
+                currentPage.postHide();
+                player.stopBackgroundMusic();
                 frame.setVisible(false);
                 frame.dispose();
-                player.stopBackgroundMusic();
-                System.exit(0);
             }
         });
         frame.setSize(new Dimension(FRAME_WIDTH, FRAME_HEIGHT));
@@ -172,11 +178,7 @@ public class View {
             pages.get(key).initialize();
             frame.getContentPane().add(pages.get(key).getJComponent(), key.toString());
         }
-        Settings loadedSettings = Settings.loadSettings(Settings.DEFAULT_SETTINGS_FILE, () -> {
-            WordmasterUtils.showErrorAlert(frame,
-                    "e_settings_loading", settings.getLanguage());
-        });
-        applySettings(loadedSettings);
+
         isInitialized = true;
     }
 }

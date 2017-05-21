@@ -93,6 +93,7 @@ public class GameModel {
         notificationThread = new NotificationThread();
         notificationThread.start();
         scheduler.runModelThread();
+        logger.debug("New model instance created");
     }
 
     /**
@@ -187,6 +188,20 @@ public class GameModel {
     }
 
     /**
+     * Finishes game with the win of second player. Logic can change
+     * in future releases.
+     */
+    public void surrender() {
+        if (playerList.size() == 2) {
+            winners.add(playerList.get(getPreviousPlayer()));
+            emitFinishEvent();
+            destroy();
+        } else {
+            // hook for the later development
+        }
+    }
+
+    /**
      * Saves model state to the file. Block model changes until complete.
      * Need to call startGame() after loading.
      *
@@ -272,20 +287,6 @@ public class GameModel {
             });
         } else {
             analyzePosition();
-        }
-    }
-
-    /**
-     * Finishes game with the win of second player. Logic can change
-     * in future releases.
-     */
-    public void surrender() {
-        if (playerList.size() == 2) {
-            winners.add(playerList.get(getPreviousPlayer()));
-            emitFinishEvent();
-            destroy();
-        } else {
-            // hook for the later development
         }
     }
 
@@ -546,7 +547,7 @@ public class GameModel {
         /**
          * Represents move operation. Move will be validated before apply
          */
-        void makeMove() {
+        private void makeMove() {
             if (!algorithm.validateMove(move)) {
                 emitInvalidMoveEvent(Move.INVALID_WORD);
                 return;
@@ -567,7 +568,7 @@ public class GameModel {
         /**
          * Represents move generation operation.
          */
-        void generateMove() {
+        private void generateMove() {
             List<String> allPlayerWords = new LinkedList<>();
             playerList.forEach((Player p) -> {
                 allPlayerWords.addAll(p.getWords());

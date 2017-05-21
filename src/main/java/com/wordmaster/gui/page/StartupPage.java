@@ -1,6 +1,7 @@
 package com.wordmaster.gui.page;
 
 import com.wordmaster.gui.audio.AudioPlayer;
+import com.wordmaster.gui.audio.SoundType;
 import com.wordmaster.gui.custom.ButtonFactory;
 import com.wordmaster.gui.View;
 import com.wordmaster.gui.custom.WordmasterUtils;
@@ -77,7 +78,7 @@ public class StartupPage extends Page {
         exitBtn.addActionListener(
                 new MenuItemListener(parentView));
         exitBtn.addActionListener(
-                new SoundButtonListener(parentView, AudioPlayer.SoundType.STANDARD_BUTTON));
+                new SoundButtonListener(parentView, SoundType.STANDARD_BUTTON));
         pageButtons.put(Buttons.EXIT, exitBtn);
         page.add(exitBtn);
 
@@ -86,7 +87,7 @@ public class StartupPage extends Page {
         setButtonsText();
     }
 
-    protected void updateLanguage() {
+    protected void update() {
         setButtonsText();
     }
 
@@ -118,7 +119,7 @@ public class StartupPage extends Page {
         Future<Vocabulary> vocabulary = Vocabulary.getVocabulary(language);
         if (!vocabulary.isDone()) {
             WordmasterUtils.showErrorAlert(parentView.getFrame(),
-                    "vocabulary_loading", parentView.getSettings().getLanguage());
+                    "e_vocabulary_loading", parentView.getSettings().getLanguage());
             return null;
         }
         try {

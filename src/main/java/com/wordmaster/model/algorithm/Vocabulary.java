@@ -41,6 +41,7 @@ public class Vocabulary {
                     vocabulary.prefixTree.loadFromStream(is);
                     is = language.getVocabularyInputStream();
                     vocabulary.reversedPrefixTree.loadFromStream(is);
+                    logger.debug("Vocabulary loaded");
                     return vocabulary;
                 } catch (IOException e) {
                     VocabularyException ve = new VocabularyException("Cannot load vocabulary", e);
